@@ -47,6 +47,10 @@ class App {
   registrarPlaca(documento, placa) {
     return this.cadastroClientes.registrarPlaca(documento, placa);
   }
+
+  removerPlaca(documento, placa) {
+  return this.cadastroClientes.removerPlaca(documento, placa);
+  }
 }
 
 module.exports = App;
