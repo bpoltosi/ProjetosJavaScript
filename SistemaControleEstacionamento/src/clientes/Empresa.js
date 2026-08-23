@@ -1,4 +1,5 @@
 const Cliente = require('./Cliente');
+const { diasCalendarioTocados } = require('../util/data');
 
 /*
     Cliente empresa: placas ilimitadas, cobrança por diária.
@@ -72,19 +73,6 @@ class Empresa extends Cliente {
   podeAutorizarEntrada() {
     return !this.inadimplente;
   }
-}
-
-/**
- * @param {Date} entrada
- * @param {Date} saida
- * @returns {number}
- */
-
-function diasCalendarioTocados(entrada, saida) {
-  const inicio = new Date(entrada.getFullYear(), entrada.getMonth(), entrada.getDate());
-  const fim = new Date(saida.getFullYear(), saida.getMonth(), saida.getDate());
-  const msPorDia = 24 * 60 * 60 * 1000;
-  return Math.floor((fim - inicio) / msPorDia) + 1;
 }
 
 module.exports = Empresa;

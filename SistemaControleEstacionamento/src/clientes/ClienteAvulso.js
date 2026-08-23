@@ -1,7 +1,8 @@
 const Cliente = require('./Cliente');
+const { mesmoDiaLocal, diasCalendarioTocados } = require('../util/data');
 /*
-    Cliente não cadastrado, criado sob demanda pela placa.
-    Não é gerenciado por CadastroClientes.
+  Cliente não cadastrado, criado sob demanda pela placa.
+  Não gerenciado por CadastroClientes.
 */
 
 class ClienteAvulso extends Cliente {
@@ -76,33 +77,6 @@ class ClienteAvulso extends Cliente {
     }
     return ClienteAvulso.VALOR_DIARIA * diasCalendarioTocados(entrada, saida);
   }
-}
-
-/**
- * @param {Date} a
- * @param {Date} b
- * @returns {boolean}
- */
-
-function mesmoDiaLocal(a, b) {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
-}
-
-/**
- * @param {Date} entrada
- * @param {Date} saida
- * @returns {number}
- */
-
-function diasCalendarioTocados(entrada, saida) {
-  const inicio = new Date(entrada.getFullYear(), entrada.getMonth(), entrada.getDate());
-  const fim = new Date(saida.getFullYear(), saida.getMonth(), saida.getDate());
-  const msPorDia = 24 * 60 * 60 * 1000;
-  return Math.floor((fim - inicio) / msPorDia) + 1;
 }
 
 module.exports = ClienteAvulso;
