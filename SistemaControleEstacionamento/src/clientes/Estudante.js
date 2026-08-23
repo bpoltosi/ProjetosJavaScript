@@ -1,4 +1,5 @@
 const Cliente = require('./Cliente');
+const { diasCalendarioTocados } = require('../util/data');
 
 /*
     Cliente estudante: uma placa, cobrança por ingresso (pré-pago).
@@ -71,21 +72,6 @@ class Estudante extends Cliente {
   podeAutorizarEntrada() {
     return this.saldo >= 0;
   }
-}
-
-/**
-    Quantidade de dias de calendário locais abrangidos pelo intervalo [entrada, saida].
-    Mesmo dia = 1; cada meia-noite cruzada incrementa 1.
- * @param {Date} entrada
- * @param {Date} saida
- * @returns {number}
-*/
-
-function diasCalendarioTocados(entrada, saida) {
-  const inicio = new Date(entrada.getFullYear(), entrada.getMonth(), entrada.getDate());
-  const fim = new Date(saida.getFullYear(), saida.getMonth(), saida.getDate());
-  const msPorDia = 24 * 60 * 60 * 1000;
-  return Math.floor((fim - inicio) / msPorDia) + 1;
 }
 
 module.exports = Estudante;

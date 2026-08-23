@@ -60,6 +60,25 @@ class CadastroClientes {
   }
 
   /**
+    Remove a placa do cliente e desfaz o registro global (Set + Map).
+   * @param {string} documento
+   * @param {string} placa
+   */
+
+  removerPlaca(documento, placa) {
+    const cliente = this.clientesPorDocumento.get(documento);
+    if (!cliente) {
+      throw new Error('cliente não encontrado para o documento informado');
+    }
+    if (!cliente.placas.has(placa)) {
+      throw new Error('placa não pertence a este cliente');
+    }
+    cliente.removerPlaca(placa);
+    this.placasCadastradas.delete(placa);
+    this.mapaPlacaParaCliente.delete(placa);
+  }
+
+  /**
    * @param {string} documento
    * @returns {import('./Cliente')|null}
   */
