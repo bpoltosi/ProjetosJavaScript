@@ -171,6 +171,23 @@ class RegistroDeEntradas_E_Saidas {
       (ticket) => ticket.dataHoraEntrada >= inicio && ticket.dataHoraEntrada <= fim
     );
   }
+
+  /**
+    Retorna todos os tickets conhecidos (abertos e fechados, de todas as placas).
+    Necessário para a persistência (TicketsCsv.salvar) e para os relatórios agregados
+    da Fase 2 (valorArrecadadoPorPeriodo, top10ClientesFrequentesDoAno), que precisam
+    varrer o histórico completo e não apenas o de uma placa específica.
+   * @returns {TicketEstacionamento[]}
+  */
+
+  todosOsTickets() {
+    const fechados = [];
+    for (const ticketsDaPlaca of this.historicoPorPlaca.values()) {
+      fechados.push(...ticketsDaPlaca);
+    }
+    const abertos = Array.from(this.ticketsAbertos.values());
+    return [...fechados, ...abertos];
+  }
 }
 
 module.exports = RegistroDeEntradas_E_Saidas;
