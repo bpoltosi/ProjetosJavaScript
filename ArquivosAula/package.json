@@ -1,5 +1,6 @@
 {
   "name": "pucrspoo",
+  "type": "module",
   "version": "1.0.0",
   "description": "",
   "main": "teste.js",
@@ -11,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "bycontract": "^3.0.1",
+    "n-readlines": "^3.4.1",
     "prompt-sync": "^4.2.0"
   }
 }
