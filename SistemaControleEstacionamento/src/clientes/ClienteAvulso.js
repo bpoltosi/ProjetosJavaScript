@@ -1,4 +1,5 @@
 const Cliente = require('./Cliente');
+const Veiculo = require('../veiculos/Veiculo');
 const { mesmoDiaLocal, diasCalendarioTocados } = require('../util/data');
 /*
   Cliente não cadastrado, criado sob demanda pela placa.
@@ -15,21 +16,25 @@ class ClienteAvulso extends Cliente {
    */
   constructor(placa) {
     super(null, null);
+    const veiculo = new Veiculo(placa);
     /** @type {string} */
-    this.placa = placa;
-    this.placas.add(placa);
+    this.placa = veiculo.placa;
+    this.placas.set(veiculo.placa, veiculo);
   }
   /**
       Avulso tem uma única placa (a que originou a instância).
    * @param {string} placa
+   * @returns {string}
    */
 
   adicionarPlaca(placa) {
     if (this.placas.size >= 1) {
       throw new Error('cliente avulso já possui placa associada');
     }
-    this.placa = placa;
-    this.placas.add(placa);
+    const veiculo = new Veiculo(placa);
+    this.placa = veiculo.placa;
+    this.placas.set(veiculo.placa, veiculo);
+    return veiculo.placa;
   }
   /**
     <= 6h sem cruzar meia-noite: hora iniciada conta cheia.

@@ -100,7 +100,7 @@ class RelatoriosGerenciais {
       throw new Error(`cliente não encontrado para o documento "${documento}"`);
     }
 
-    const placasEstacionadas = Array.from(cliente.placas).filter((placa) =>
+    const placasEstacionadas = Array.from(cliente.placas.keys()).filter((placa) =>
       this.registro.veiculoEstaDentro(placa)
     );
 
@@ -108,7 +108,7 @@ class RelatoriosGerenciais {
       documento: cliente.documento,
       nome: cliente.nome,
       tipo: this._categoriaDoCliente(cliente),
-      placas: Array.from(cliente.placas),
+      placas: Array.from(cliente.placas.keys()),
       placasEstacionadas,
       impedidoDeEntrar: !cliente.podeAutorizarEntrada({ ticketsAbertos: this.registro.ticketsAbertos }),
     };
@@ -137,7 +137,7 @@ class RelatoriosGerenciais {
     }
 
     const registros = [];
-    for (const placa of cliente.placas) {
+    for (const placa of cliente.placas.keys()) {
       registros.push(...this.registro.buscarTicketsPorPlacaEPeriodo(placa, inicio, fim));
     }
 

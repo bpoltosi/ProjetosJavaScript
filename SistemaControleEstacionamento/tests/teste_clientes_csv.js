@@ -18,7 +18,7 @@ ClientesCsv.carregar(caminho, cadastro1);
 console.log('--- Após carregar ---');
 console.log('totalClientes:', cadastro1.totalClientes);
 for (const c of cadastro1.listarClientes()) {
-  console.log(c.constructor.name, c.documento, c.nome, Array.from(c.placas), c.saldo ?? c.saldoDevedor ?? null);
+  console.log(c.constructor.name, c.documento, c.nome, Array.from(c.placas.keys()), c.saldo ?? c.saldoDevedor ?? null);
 }
 console.log('placasCadastradas:', Array.from(cadastro1.placasCadastradas));
 console.log('mapaPlacaParaCliente tem EST1A23?', cadastro1.mapaPlacaParaCliente.has('EST1A23'));
@@ -34,7 +34,7 @@ ClientesCsv.carregar(caminho2, cadastro2);
 console.log('--- Após recarregar do CSV salvo ---');
 console.log('totalClientes:', cadastro2.totalClientes);
 for (const c of cadastro2.listarClientes()) {
-  console.log(c.constructor.name, c.documento, c.nome, Array.from(c.placas), c.saldo ?? c.saldoDevedor ?? null);
+  console.log(c.constructor.name, c.documento, c.nome, Array.from(c.placas.keys()), c.saldo ?? c.saldoDevedor ?? null);
 }
 
 // 3) teste de arquivo inexistente (primeira execução) não deve lançar erro
