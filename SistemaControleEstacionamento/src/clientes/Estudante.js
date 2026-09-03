@@ -1,4 +1,5 @@
 const Cliente = require('./Cliente');
+const Veiculo = require('../veiculos/Veiculo');
 const { diasCalendarioTocados } = require('../util/data');
 
 /*
@@ -31,7 +32,9 @@ class Estudante extends Cliente {
     if (this.placas.size >= 1) {
       throw new Error('estudante já possui placa cadastrada');
     }
-    this.placas.add(placa);
+    const veiculo = new Veiculo(placa);
+    this.placas.set(veiculo.placa, veiculo);
+    return veiculo.placa;
   }
 
   /**

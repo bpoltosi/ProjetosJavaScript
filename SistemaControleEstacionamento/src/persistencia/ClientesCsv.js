@@ -107,7 +107,7 @@ function salvar(caminho, cadastroClientes) {
       );
     }
 
-    const placasStr = Array.from(cliente.placas).join(';');
+    const placasStr = Array.from(cliente.placas.keys()).join(';');
     return [cliente.documento, cliente.nome, campoEspecifico, tipo, placasStr];
   });
 

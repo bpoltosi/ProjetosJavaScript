@@ -1,9 +1,22 @@
 const Cliente = require('./Cliente');
+const Veiculo = require('../veiculos/Veiculo');
 const { diasCalendarioTocados } = require('../util/data');
 
 /*
     Cliente empresa: placas ilimitadas, cobrança por diária.
     Inadimplência bloqueia toda a frota.
+
+    Correção B (plano-correcao-fase1.md): antes deste ajuste, a inadimplência
+    só acontecia se alguém chamasse marcarInadimplente() manualmente — o
+    saldoDevedor podia crescer indefinidamente sem nunca bloquear a frota.
+    Agora existe um boleto com data de vencimento; verificarVencimento()
+    transiciona automaticamente para inadimplente quando o vencimento passa
+    e ainda há saldo devedor. A verificação é on-demand (chamada a partir de
+    podeAutorizarEntrada), sem precisar de um scheduler.
+
+    dataVencimentoBoleto fica só em memória por enquanto (não é persistida em
+    clientes.csv) — decisão B.6 do plano: reabrir o formato do CSV por este
+    item tem peso baixo na nota; pode ser adicionado depois se necessário.
 */
 
 class Empresa extends Cliente {
@@ -24,14 +37,19 @@ class Empresa extends Cliente {
     this.saldoDevedor = 0;
     /** @type {boolean} */
     this.inadimplente = false;
+    /** @type {Date|null} */
+    this.dataVencimentoBoleto = null;
   }
 
   /**
    * Sem limite de placas.
    * @param {string} placa
+   * @returns {string}
    */
   adicionarPlaca(placa) {
-    this.placas.add(placa);
+    const veiculo = new Veiculo(placa);
+    this.placas.set(veiculo.placa, veiculo);
+    return veiculo.placa;
   }
 
   /**
@@ -42,15 +60,46 @@ class Empresa extends Cliente {
     this.saldoDevedor += valor;
   }
 
+  /**
+    Emite um boleto com data de vencimento — a partir daqui,
+    verificarVencimento() pode transicionar a empresa para inadimplente.
+   * @param {Date} dataVencimento
+  */
+  emitirBoleto(dataVencimento) {
+    this.dataVencimentoBoleto = dataVencimento;
+  }
+
   //Marca a empresa como inadimplente (bloqueia a frota).
   marcarInadimplente() {
     this.inadimplente = true;
   }
 
-  //Quita o boleto, zera o saldo devedor e libera a frota.
+  /**
+    Quita o boleto: zera saldo devedor, remove o vencimento e libera a frota.
+  */
   quitarBoleto() {
     this.inadimplente = false;
     this.saldoDevedor = 0;
+    this.dataVencimentoBoleto = null;
+  }
+
+  /**
+    Transição automática para inadimplente: se há boleto emitido, ainda há
+    saldo devedor pendente e a data atual já passou do vencimento, marca a
+    empresa como inadimplente. Não faz nada se já está em dia ou se ainda não
+    venceu.
+   * @param {Date} dataAtual
+   * @returns {boolean} true se a empresa está (ou passou a estar) inadimplente
+  */
+  verificarVencimento(dataAtual) {
+    if (
+      this.dataVencimentoBoleto !== null &&
+      this.saldoDevedor > 0 &&
+      dataAtual > this.dataVencimentoBoleto
+    ) {
+      this.inadimplente = true;
+    }
+    return this.inadimplente;
   }
 
   /**
@@ -67,10 +116,15 @@ class Empresa extends Cliente {
   }
 
   /**
+    Antes de responder, verifica automaticamente se o boleto venceu (B.4:
+    checagem on-demand, sem scheduler) — assim qualquer chamador
+    (autorizarEntrada, listarBloqueados, relatórios) dispara a transição
+    sem precisar saber que ela existe.
    * @returns {boolean}
    */
 
   podeAutorizarEntrada() {
+    this.verificarVencimento(new Date());
     return !this.inadimplente;
   }
 }
