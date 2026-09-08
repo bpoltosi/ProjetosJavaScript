@@ -7,11 +7,17 @@ const Empresa = require('../clientes/Empresa');
   Leitura e escrita do arquivo de clientes pré-cadastrados (Estudante, Professor,
   Empresa). ClienteAvulso nunca aparece aqui — não é gerenciado por CadastroClientes.
 
-  Formato de cada linha (decisão 1.1/roadmap Fase 2):
-    documento,nome,campoEspecifico,tipo,placa1;placa2;...
+  Formato de cada linha (decisão 1.1/roadmap Fase 2, reaberta pelo item B.6 do
+  plano de correção da Fase 1 para incluir dataVencimentoBoleto):
+    documento,nome,campoEspecifico,tipo,placa1;placa2;...,dataVencimentoBoleto
   - campoEspecifico: saldo (Estudante), saldoDevedor (Empresa), vazio (Professor)
   - tipo: "Estudante" | "Professor" | "Empresa"
   - placas: múltiplas placas separadas por ";"; campo pode ser vazio (nenhuma placa)
+  - dataVencimentoBoleto: só relevante para Empresa (ISO 8601, vazio se nenhum
+    boleto foi emitido); vazio/ausente para Estudante e Professor. Campo
+    adicionado ao final da linha para manter retrocompatibilidade — arquivos
+    CSV antigos (5 colunas) continuam sendo lidos normalmente, apenas sem
+    vencimento de boleto restaurado.
 
   Os nomes de método usados aqui (cadastrarCliente, adicionarPlaca via registrarPlaca,
   carregarSaldo) são os mesmos já fixados na Fase 1 a partir da Figura 4 do enunciado.
@@ -33,7 +39,7 @@ function carregar(caminho, cadastroClientes) {
   const linhas = lerLinhas(caminho);
 
   for (const linha of linhas) {
-    const [documento, nome, campoEspecifico, tipo, placasStr] = linha;
+    const [documento, nome, campoEspecifico, tipo, placasStr, dataVencimentoStr] = linha;
     const placas = (placasStr ?? '')
       .split(';')
       .map((placa) => placa.trim())
@@ -66,6 +72,14 @@ function carregar(caminho, cadastroClientes) {
         if (debito !== 0) {
           cliente.registrarDebito(debito);
         }
+        if (dataVencimentoStr != null && dataVencimentoStr !== '') {
+          cliente.emitirBoleto(new Date(dataVencimentoStr));
+          // Recalcula inadimplência agora (estado derivado, mesmo padrão usado
+          // para placaAtualEstacionada do Professor): sem isso, um relatório
+          // que leia cliente.inadimplente antes de qualquer chamada a
+          // podeAutorizarEntrada() veria um valor desatualizado logo após o load.
+          cliente.verificarVencimento(new Date());
+        }
         break;
       }
       default:
@@ -91,6 +105,7 @@ function salvar(caminho, cadastroClientes) {
   const linhas = cadastroClientes.listarClientes().map((cliente) => {
     let tipo;
     let campoEspecifico = '';
+    let dataVencimentoStr = '';
 
     if (cliente instanceof Estudante) {
       tipo = TIPO_ESTUDANTE;
@@ -101,6 +116,9 @@ function salvar(caminho, cadastroClientes) {
     } else if (cliente instanceof Empresa) {
       tipo = TIPO_EMPRESA;
       campoEspecifico = cliente.saldoDevedor;
+      dataVencimentoStr = cliente.dataVencimentoBoleto
+        ? cliente.dataVencimentoBoleto.toISOString()
+        : '';
     } else {
       throw new Error(
         `tipo de cliente não suportado pela persistência: ${cliente.constructor.name}`
@@ -108,7 +126,7 @@ function salvar(caminho, cadastroClientes) {
     }
 
     const placasStr = Array.from(cliente.placas.keys()).join(';');
-    return [cliente.documento, cliente.nome, campoEspecifico, tipo, placasStr];
+    return [cliente.documento, cliente.nome, campoEspecifico, tipo, placasStr, dataVencimentoStr];
   });
 
   escreverLinhas(caminho, linhas);

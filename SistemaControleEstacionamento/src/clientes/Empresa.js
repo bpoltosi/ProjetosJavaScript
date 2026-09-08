@@ -14,9 +14,9 @@ const { diasCalendarioTocados } = require('../util/data');
     e ainda há saldo devedor. A verificação é on-demand (chamada a partir de
     podeAutorizarEntrada), sem precisar de um scheduler.
 
-    dataVencimentoBoleto fica só em memória por enquanto (não é persistida em
-    clientes.csv) — decisão B.6 do plano: reabrir o formato do CSV por este
-    item tem peso baixo na nota; pode ser adicionado depois se necessário.
+    dataVencimentoBoleto é persistida em clientes.csv como 6ª coluna (decisão
+    B.6 do plano de correção, reabrindo a decisão 1.1 do roadmap Fase 2) — ver
+    ClientesCsv.js para o formato exato e a lógica de leitura/escrita.
 */
 
 class Empresa extends Cliente {

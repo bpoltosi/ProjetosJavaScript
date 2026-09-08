@@ -42,7 +42,7 @@ interativo:
 
 | Arquivo | Formato por linha |
 |---|---|
-| `clientes.csv` | `documento,nome,campoEspecifico,tipo,placa1;placa2;...` (campoEspecifico = saldo do Estudante, saldoDevedor da Empresa, ou vazio para Professor) |
+| `clientes.csv` | `documento,nome,campoEspecifico,tipo,placa1;placa2;...,dataVencimentoBoleto` (campoEspecifico = saldo do Estudante, saldoDevedor da Empresa, ou vazio para Professor; dataVencimentoBoleto só é relevante para Empresa — ISO 8601 ou vazio; coluna adicionada ao final para manter retrocompatibilidade com CSVs sem ela) |
 | `tickets.csv` | `placa,dataHoraEntrada,dataHoraSaida,custoOriginal,descontoId,valorDesconto,valorDevido,valorPago` (ticket ainda aberto: só placa e dataHoraEntrada preenchidos) |
 | `bloqueios.csv` | uma placa avulsa bloqueada por linha (regenerado por completo a cada salvamento) |
 
@@ -59,6 +59,7 @@ node tests/teste_app_persistencia.js     # carregarTudo/salvarTudo via App
 node tests/teste_relatorios.js           # os 6 relatórios gerenciais, com valores esperados
 node tests/teste_interface_manual.js     # fluxo completo da interface interativa, ponta a ponta
 node tests/teste_correcao_fase1.js       # normalização de placa (Veiculo) + inadimplência automática da Empresa
+node tests/teste_persistencia_boleto.js  # round-trip do vencimento do boleto da Empresa (item B.6)
 ```
 
 ## Correção pós-avaliação da Fase 1
@@ -75,7 +76,8 @@ foram aplicadas:
   `emitirBoleto(dataVencimento)` e `verificarVencimento(dataAtual)`. A checagem é on-demand —
   disparada dentro de `podeAutorizarEntrada()` — e transiciona `inadimplente = true`
   automaticamente quando há saldo devedor pendente e a data de vencimento já passou. Essa data
-  não é persistida em `clientes.csv` por enquanto (ver nota no código de `Empresa.js`).
+  é persistida em `clientes.csv` como a 6ª coluna (ver tabela de formato acima e
+  `tests/teste_persistencia_boleto.js`).
 
 Testes cobrindo os dois cenários estão em `tests/teste_correcao_fase1.js`. Toda a suíte de
 testes existente (`tests/*.js`) foi reexecutada e não houve mudança de comportamento além da
