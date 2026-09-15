@@ -42,14 +42,14 @@ export class Turma {
   aprovados() {
     const filterAprovados = filter(a => a.aprovado());
     const getNome = prop("nome");
-    const nomesAprovados = pipe(filterAprovados,map(getNome));
+    const nomesAprovados = pipe(filterAprovados, map(getNome));
     return nomesAprovados(this.#alunos);
   }
 
   reprovados() {
-    const filterReprovados = filter(a => a.aprovado() == false);
+    const filterReprovados = filter(a => !a.aprovado());
     const getNome = prop("nome");
-    const nomesReprovados = pipe(filterReprovados,map(getNome));
+    const nomesReprovados = pipe(filterReprovados, map(getNome));
     return nomesReprovados(this.#alunos);
   }
 
