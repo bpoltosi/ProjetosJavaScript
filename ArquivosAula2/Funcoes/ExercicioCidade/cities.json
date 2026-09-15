@@ -1,0 +1,1002 @@
+[
+  {
+    "name": "São Paulo",
+    "country": "BR",
+    "region": "SP",
+    "cost": "2500",
+    "currency": "BRL",
+    "temp": 310.255555,
+    "humidity": 78,
+    "internetSpeed": 20
+  },
+  {
+    "name": "Rio de Janeiro",
+    "country": "BR",
+    "region": "RJ",
+    "cost": "2800",
+    "currency": "BRL",
+    "temp": 301.152341,
+    "humidity": 80,
+    "internetSpeed": 45
+  },
+  {
+    "name": "Brasília",
+    "country": "BR",
+    "region": "DF",
+    "cost": "3000",
+    "currency": "BRL",
+    "temp": 296.501122,
+    "humidity": 60,
+    "internetSpeed": 60
+  },
+  {
+    "name": "Salvador",
+    "country": "BR",
+    "region": "BA",
+    "cost": "2200",
+    "currency": "BRL",
+    "temp": 300.204551,
+    "humidity": 82,
+    "internetSpeed": 35
+  },
+  {
+    "name": "Fortaleza",
+    "country": "BR",
+    "region": "CE",
+    "cost": "2100",
+    "currency": "BRL",
+    "temp": 302.109823,
+    "humidity": 75,
+    "internetSpeed": 40
+  },
+  {
+    "name": "Belo Horizonte",
+    "country": "BR",
+    "region": "MG",
+    "cost": "2300",
+    "currency": "BRL",
+    "temp": 295.401299,
+    "humidity": 68,
+    "internetSpeed": 55
+  },
+  {
+    "name": "Manaus",
+    "country": "BR",
+    "region": "AM",
+    "cost": "2000",
+    "currency": "BRL",
+    "temp": 304.803321,
+    "humidity": 88,
+    "internetSpeed": 30
+  },
+  {
+    "name": "Curitiba",
+    "country": "BR",
+    "region": "PR",
+    "cost": "2600",
+    "currency": "BRL",
+    "temp": 291.300012,
+    "humidity": 75,
+    "internetSpeed": 70
+  },
+  {
+    "name": "Recife",
+    "country": "BR",
+    "region": "PE",
+    "cost": "2200",
+    "currency": "BRL",
+    "temp": 301.002811,
+    "humidity": 79,
+    "internetSpeed": 45
+  },
+  {
+    "name": "Porto Alegre",
+    "country": "BR",
+    "region": "RS",
+    "cost": "2500",
+    "currency": "BRL",
+    "temp": 293.204481,
+    "humidity": 74,
+    "internetSpeed": 60
+  },
+  {
+    "name": "Belém",
+    "country": "BR",
+    "region": "PA",
+    "cost": "1900",
+    "currency": "BRL",
+    "temp": 303.501922,
+    "humidity": 85,
+    "internetSpeed": 30
+  },
+  {
+    "name": "Goiânia",
+    "country": "BR",
+    "region": "GO",
+    "cost": "2100",
+    "currency": "BRL",
+    "temp": 298.604102,
+    "humidity": 62,
+    "internetSpeed": 50
+  },
+  {
+    "name": "Guarulhos",
+    "country": "BR",
+    "region": "SP",
+    "cost": "2200",
+    "currency": "BRL",
+    "temp": 297.809123,
+    "humidity": 76,
+    "internetSpeed": 40
+  },
+  {
+    "name": "Campinas",
+    "country": "BR",
+    "region": "SP",
+    "cost": "2700",
+    "currency": "BRL",
+    "temp": 297.108832,
+    "humidity": 70,
+    "internetSpeed": 80
+  },
+  {
+    "name": "São Luís",
+    "country": "BR",
+    "region": "MA",
+    "cost": "1800",
+    "currency": "BRL",
+    "temp": 302.401188,
+    "humidity": 81,
+    "internetSpeed": 35
+  },
+  {
+    "name": "São Gonçalo",
+    "country": "BR",
+    "region": "RJ",
+    "cost": "1800",
+    "currency": "BRL",
+    "temp": 300.502211,
+    "humidity": 78,
+    "internetSpeed": 30
+  },
+  {
+    "name": "Maceió",
+    "country": "BR",
+    "region": "AL",
+    "cost": "2000",
+    "currency": "BRL",
+    "temp": 301.304561,
+    "humidity": 77,
+    "internetSpeed": 40
+  },
+  {
+    "name": "Duque de Caxias",
+    "country": "BR",
+    "region": "RJ",
+    "cost": "1900",
+    "currency": "BRL",
+    "temp": 300.109923,
+    "humidity": 79,
+    "internetSpeed": 35
+  },
+  {
+    "name": "Natal",
+    "country": "BR",
+    "region": "RN",
+    "cost": "2100",
+    "currency": "BRL",
+    "temp": 300.908812,
+    "humidity": 76,
+    "internetSpeed": 45
+  },
+  {
+    "name": "Teresina",
+    "country": "BR",
+    "region": "PI",
+    "cost": "1800",
+    "currency": "BRL",
+    "temp": 306.205122,
+    "humidity": 65,
+    "internetSpeed": 35
+  },
+  {
+    "name": "São Bernardo do Campo",
+    "country": "BR",
+    "region": "SP",
+    "cost": "2400",
+    "currency": "BRL",
+    "temp": 296.804102,
+    "humidity": 75,
+    "internetSpeed": 55
+  },
+  {
+    "name": "Nova Iguaçu",
+    "country": "BR",
+    "region": "RJ",
+    "cost": "1800",
+    "currency": "BRL",
+    "temp": 300.001923,
+    "humidity": 78,
+    "internetSpeed": 30
+  },
+  {
+    "name": "Campo Grande",
+    "country": "BR",
+    "region": "MS",
+    "cost": "2200",
+    "currency": "BRL",
+    "temp": 299.102291,
+    "humidity": 64,
+    "internetSpeed": 50
+  },
+  {
+    "name": "Osasco",
+    "country": "BR",
+    "region": "SP",
+    "cost": "2300",
+    "currency": "BRL",
+    "temp": 297.508821,
+    "humidity": 74,
+    "internetSpeed": 50
+  },
+  {
+    "name": "Santo André",
+    "country": "BR",
+    "region": "SP",
+    "cost": "2400",
+    "currency": "BRL",
+    "temp": 296.903312,
+    "humidity": 75,
+    "internetSpeed": 55
+  },
+  {
+    "name": "João Pessoa",
+    "country": "BR",
+    "region": "PB",
+    "cost": "2100",
+    "currency": "BRL",
+    "temp": 300.401188,
+    "humidity": 78,
+    "internetSpeed": 45
+  },
+  {
+    "name": "Jaboatão dos Guararapes",
+    "country": "BR",
+    "region": "PE",
+    "cost": "1900",
+    "currency": "BRL",
+    "temp": 300.809123,
+    "humidity": 80,
+    "internetSpeed": 35
+  },
+  {
+    "name": "São José dos Campos",
+    "country": "BR",
+    "region": "SP",
+    "cost": "2600",
+    "currency": "BRL",
+    "temp": 296.002341,
+    "humidity": 72,
+    "internetSpeed": 90
+  },
+  {
+    "name": "Uberlândia",
+    "country": "BR",
+    "region": "MG",
+    "cost": "2200",
+    "currency": "BRL",
+    "temp": 296.508821,
+    "humidity": 65,
+    "internetSpeed": 60
+  },
+  {
+    "name": "Contagem",
+    "country": "BR",
+    "region": "MG",
+    "cost": "2000",
+    "currency": "BRL",
+    "temp": 295.801122,
+    "humidity": 68,
+    "internetSpeed": 45
+  },
+  {
+    "name": "Sorocaba",
+    "country": "BR",
+    "region": "SP",
+    "cost": "2300",
+    "currency": "BRL",
+    "temp": 296.704512,
+    "humidity": 71,
+    "internetSpeed": 65
+  },
+  {
+    "name": "Ribeirão Preto",
+    "country": "BR",
+    "region": "SP",
+    "cost": "2500",
+    "currency": "BRL",
+    "temp": 299.802199,
+    "humidity": 60,
+    "internetSpeed": 70
+  },
+  {
+    "name": "Cuiabá",
+    "country": "BR",
+    "region": "MT",
+    "cost": "2200",
+    "currency": "BRL",
+    "temp": 305.501988,
+    "humidity": 63,
+    "internetSpeed": 45
+  },
+  {
+    "name": "Aracaju",
+    "country": "BR",
+    "region": "SE",
+    "cost": "2000",
+    "currency": "BRL",
+    "temp": 300.708821,
+    "humidity": 76,
+    "internetSpeed": 40
+  },
+  {
+    "name": "Feira de Santana",
+    "country": "BR",
+    "region": "BA",
+    "cost": "1800",
+    "currency": "BRL",
+    "temp": 299.901122,
+    "humidity": 72,
+    "internetSpeed": 35
+  },
+  {
+    "name": "Florianópolis",
+    "country": "BR",
+    "region": "SC",
+    "cost": "3200",
+    "currency": "BRL",
+    "temp": 293.805512,
+    "humidity": 78,
+    "internetSpeed": 100
+  },
+  {
+    "name": "Santos",
+    "country": "BR",
+    "region": "SP",
+    "cost": "2800",
+    "currency": "BRL",
+    "temp": 298.204512,
+    "humidity": 82,
+    "internetSpeed": 75
+  },
+  {
+    "name": "Joinville",
+    "country": "BR",
+    "region": "SC",
+    "cost": "2500",
+    "currency": "BRL",
+    "temp": 292.501192,
+    "humidity": 80,
+    "internetSpeed": 65
+  },
+  {
+    "name": "Londrina",
+    "country": "BR",
+    "region": "PR",
+    "cost": "2200",
+    "currency": "BRL",
+    "temp": 294.108821,
+    "humidity": 70,
+    "internetSpeed": 55
+  },
+  {
+    "name": "Niterói",
+    "country": "BR",
+    "region": "RJ",
+    "cost": "3100",
+    "currency": "BRL",
+    "temp": 299.501122,
+    "humidity": 79,
+    "internetSpeed": 70
+  },
+  {
+    "name": "New York",
+    "country": "US",
+    "region": "NY",
+    "cost": "4200",
+    "currency": "USD",
+    "temp": 288.152211,
+    "humidity": 65,
+    "internetSpeed": 300
+  },
+  {
+    "name": "Los Angeles",
+    "country": "US",
+    "region": "CA",
+    "cost": "3800",
+    "currency": "USD",
+    "temp": 294.251092,
+    "humidity": 60,
+    "internetSpeed": 250
+  },
+  {
+    "name": "Chicago",
+    "country": "US",
+    "region": "IL",
+    "cost": "3200",
+    "currency": "USD",
+    "temp": 283.158821,
+    "humidity": 68,
+    "internetSpeed": 200
+  },
+  {
+    "name": "Houston",
+    "country": "US",
+    "region": "TX",
+    "cost": "2800",
+    "currency": "USD",
+    "temp": 297.501122,
+    "humidity": 75,
+    "internetSpeed": 180
+  },
+  {
+    "name": "Phoenix",
+    "country": "US",
+    "region": "AZ",
+    "cost": "2700",
+    "currency": "USD",
+    "temp": 303.159921,
+    "humidity": 30,
+    "internetSpeed": 150
+  },
+  {
+    "name": "Philadelphia",
+    "country": "US",
+    "region": "PA",
+    "cost": "2900",
+    "currency": "USD",
+    "temp": 286.502211,
+    "humidity": 64,
+    "internetSpeed": 180
+  },
+  {
+    "name": "San Antonio",
+    "country": "US",
+    "region": "TX",
+    "cost": "2500",
+    "currency": "USD",
+    "temp": 298.158812,
+    "humidity": 68,
+    "internetSpeed": 140
+  },
+  {
+    "name": "San Diego",
+    "country": "US",
+    "region": "CA",
+    "cost": "3600",
+    "currency": "USD",
+    "temp": 292.151122,
+    "humidity": 70,
+    "internetSpeed": 220
+  },
+  {
+    "name": "Dallas",
+    "country": "US",
+    "region": "TX",
+    "cost": "3000",
+    "currency": "USD",
+    "temp": 296.804512,
+    "humidity": 62,
+    "internetSpeed": 200
+  },
+  {
+    "name": "San Jose",
+    "country": "US",
+    "region": "CA",
+    "cost": "4500",
+    "currency": "USD",
+    "temp": 291.502211,
+    "humidity": 62,
+    "internetSpeed": 500
+  },
+  {
+    "name": "Austin",
+    "country": "US",
+    "region": "TX",
+    "cost": "3400",
+    "currency": "USD",
+    "temp": 297.158821,
+    "humidity": 64,
+    "internetSpeed": 350
+  },
+  {
+    "name": "Miami",
+    "country": "US",
+    "region": "FL",
+    "cost": "3700",
+    "currency": "USD",
+    "temp": 299.851122,
+    "humidity": 78,
+    "internetSpeed": 250
+  },
+  {
+    "name": "San Francisco",
+    "country": "US",
+    "region": "CA",
+    "cost": "4800",
+    "currency": "USD",
+    "temp": 288.704512,
+    "humidity": 75,
+    "internetSpeed": 400
+  },
+  {
+    "name": "Seattle",
+    "country": "US",
+    "region": "WA",
+    "cost": "3900",
+    "currency": "USD",
+    "temp": 284.159921,
+    "humidity": 72,
+    "internetSpeed": 350
+  },
+  {
+    "name": "Denver",
+    "country": "US",
+    "region": "CO",
+    "cost": "3100",
+    "currency": "USD",
+    "temp": 285.402211,
+    "humidity": 45,
+    "internetSpeed": 200
+  },
+  {
+    "name": "London",
+    "country": "GB",
+    "region": "ENG",
+    "cost": "3100",
+    "currency": "GBP",
+    "temp": 284.258812,
+    "humidity": 80,
+    "internetSpeed": 220
+  },
+  {
+    "name": "Manchester",
+    "country": "GB",
+    "region": "ENG",
+    "cost": "2200",
+    "currency": "GBP",
+    "temp": 282.151122,
+    "humidity": 82,
+    "internetSpeed": 180
+  },
+  {
+    "name": "Edinburgh",
+    "country": "GB",
+    "region": "SCT",
+    "cost": "2400",
+    "currency": "GBP",
+    "temp": 280.854512,
+    "humidity": 83,
+    "internetSpeed": 160
+  },
+  {
+    "name": "Paris",
+    "country": "FR",
+    "region": "IDF",
+    "cost": "3300",
+    "currency": "EUR",
+    "temp": 286.159921,
+    "humidity": 75,
+    "internetSpeed": 250
+  },
+  {
+    "name": "Lyon",
+    "country": "FR",
+    "region": "ARA",
+    "cost": "2400",
+    "currency": "EUR",
+    "temp": 285.502211,
+    "humidity": 72,
+    "internetSpeed": 200
+  },
+  {
+    "name": "Marseille",
+    "country": "FR",
+    "region": "PAC",
+    "cost": "2300",
+    "currency": "EUR",
+    "temp": 289.208812,
+    "humidity": 68,
+    "internetSpeed": 180
+  },
+  {
+    "name": "Berlin",
+    "country": "DE",
+    "region": "BE",
+    "cost": "2600",
+    "currency": "EUR",
+    "temp": 283.501122,
+    "humidity": 70,
+    "internetSpeed": 250
+  },
+  {
+    "name": "Munich",
+    "country": "DE",
+    "region": "BY",
+    "cost": "3200",
+    "currency": "EUR",
+    "temp": 282.804512,
+    "humidity": 72,
+    "internetSpeed": 300
+  },
+  {
+    "name": "Frankfurt",
+    "country": "DE",
+    "region": "HE",
+    "cost": "3000",
+    "currency": "EUR",
+    "temp": 284.109921,
+    "humidity": 71,
+    "internetSpeed": 280
+  },
+  {
+    "name": "Madrid",
+    "country": "ES",
+    "region": "MD",
+    "cost": "2200",
+    "currency": "EUR",
+    "temp": 289.502211,
+    "humidity": 52,
+    "internetSpeed": 220
+  },
+  {
+    "name": "Barcelona",
+    "country": "ES",
+    "region": "CT",
+    "cost": "2500",
+    "currency": "EUR",
+    "temp": 290.808812,
+    "humidity": 70,
+    "internetSpeed": 250
+  },
+  {
+    "name": "Valencia",
+    "country": "ES",
+    "region": "VC",
+    "cost": "1900",
+    "currency": "EUR",
+    "temp": 291.201122,
+    "humidity": 66,
+    "internetSpeed": 200
+  },
+  {
+    "name": "Rome",
+    "country": "IT",
+    "region": "LAZ",
+    "cost": "2300",
+    "currency": "EUR",
+    "temp": 289.804512,
+    "humidity": 65,
+    "internetSpeed": 180
+  },
+  {
+    "name": "Milan",
+    "country": "IT",
+    "region": "LOM",
+    "cost": "2900",
+    "currency": "EUR",
+    "temp": 287.409921,
+    "humidity": 74,
+    "internetSpeed": 220
+  },
+  {
+    "name": "Lisbon",
+    "country": "PT",
+    "region": "LIS",
+    "cost": "2100",
+    "currency": "EUR",
+    "temp": 289.102211,
+    "humidity": 73,
+    "internetSpeed": 200
+  },
+  {
+    "name": "Porto",
+    "country": "PT",
+    "region": "POR",
+    "cost": "1800",
+    "currency": "EUR",
+    "temp": 287.908812,
+    "humidity": 78,
+    "internetSpeed": 190
+  },
+  {
+    "name": "Amsterdam",
+    "country": "NL",
+    "region": "NH",
+    "cost": "3400",
+    "currency": "EUR",
+    "temp": 283.801122,
+    "humidity": 81,
+    "internetSpeed": 300
+  },
+  {
+    "name": "Brussels",
+    "country": "BE",
+    "region": "BRU",
+    "cost": "2700",
+    "currency": "EUR",
+    "temp": 284.504512,
+    "humidity": 80,
+    "internetSpeed": 220
+  },
+  {
+    "name": "Vienna",
+    "country": "AT",
+    "region": "VIE",
+    "cost": "2600",
+    "currency": "EUR",
+    "temp": 284.209921,
+    "humidity": 72,
+    "internetSpeed": 250
+  },
+  {
+    "name": "Zurich",
+    "country": "CH",
+    "region": "ZH",
+    "cost": "4800",
+    "currency": "CHF",
+    "temp": 282.902211,
+    "humidity": 76,
+    "internetSpeed": 350
+  },
+  {
+    "name": "Geneva",
+    "country": "CH",
+    "region": "GE",
+    "cost": "4600",
+    "currency": "CHF",
+    "temp": 283.408812,
+    "humidity": 75,
+    "internetSpeed": 320
+  },
+  {
+    "name": "Tokyo",
+    "country": "JP",
+    "region": "TYO",
+    "cost": "380000",
+    "currency": "JPY",
+    "temp": 288.501122,
+    "humidity": 71,
+    "internetSpeed": 400
+  },
+  {
+    "name": "Osaka",
+    "country": "JP",
+    "region": "OSK",
+    "cost": "310000",
+    "currency": "JPY",
+    "temp": 289.204512,
+    "humidity": 69,
+    "internetSpeed": 350
+  },
+  {
+    "name": "Kyoto",
+    "country": "JP",
+    "region": "KYT",
+    "cost": "290000",
+    "currency": "JPY",
+    "temp": 288.909921,
+    "humidity": 70,
+    "internetSpeed": 300
+  },
+  {
+    "name": "Seoul",
+    "country": "KR",
+    "region": "SEO",
+    "cost": "2800000",
+    "currency": "KRW",
+    "temp": 286.702211,
+    "humidity": 68,
+    "internetSpeed": 500
+  },
+  {
+    "name": "Beijing",
+    "country": "CN",
+    "region": "BJ",
+    "cost": "9500",
+    "currency": "CNY",
+    "temp": 285.108812,
+    "humidity": 55,
+    "internetSpeed": 200
+  },
+  {
+    "name": "Shanghai",
+    "country": "CN",
+    "region": "SH",
+    "cost": "11000",
+    "currency": "CNY",
+    "temp": 288.401122,
+    "humidity": 74,
+    "internetSpeed": 250
+  },
+  {
+    "name": "Hong Kong",
+    "country": "HK",
+    "region": "HK",
+    "cost": "28000",
+    "currency": "HKD",
+    "temp": 295.204512,
+    "humidity": 79,
+    "internetSpeed": 300
+  },
+  {
+    "name": "Singapore",
+    "country": "SG",
+    "region": "SG",
+    "cost": "4200",
+    "currency": "SGD",
+    "temp": 300.509921,
+    "humidity": 84,
+    "internetSpeed": 450
+  },
+  {
+    "name": "Bangkok",
+    "country": "TH",
+    "region": "BKK",
+    "cost": "35000",
+    "currency": "THB",
+    "temp": 303.802211,
+    "humidity": 76,
+    "internetSpeed": 120
+  },
+  {
+    "name": "Sydney",
+    "country": "AU",
+    "region": "NSW",
+    "cost": "3900",
+    "currency": "AUD",
+    "temp": 291.808812,
+    "humidity": 65,
+    "internetSpeed": 250
+  },
+  {
+    "name": "Melbourne",
+    "country": "AU",
+    "region": "VIC",
+    "cost": "3600",
+    "currency": "AUD",
+    "temp": 288.201122,
+    "humidity": 68,
+    "internetSpeed": 220
+  },
+  {
+    "name": "Toronto",
+    "country": "CA",
+    "region": "ON",
+    "cost": "3500",
+    "currency": "CAD",
+    "temp": 282.104512,
+    "humidity": 70,
+    "internetSpeed": 250
+  },
+  {
+    "name": "Vancouver",
+    "country": "CA",
+    "region": "BC",
+    "cost": "3800",
+    "currency": "CAD",
+    "temp": 283.509921,
+    "humidity": 76,
+    "internetSpeed": 220
+  },
+  {
+    "name": "Montreal",
+    "country": "CA",
+    "region": "QC",
+    "cost": "2900",
+    "currency": "CAD",
+    "temp": 280.902211,
+    "humidity": 69,
+    "internetSpeed": 200
+  },
+  {
+    "name": "Buenos Aires",
+    "country": "AR",
+    "region": "CABA",
+    "cost": "450000",
+    "currency": "ARS",
+    "temp": 291.508812,
+    "humidity": 72,
+    "internetSpeed": 80
+  },
+  {
+    "name": "Santiago",
+    "country": "CL",
+    "region": "RM",
+    "cost": "850000",
+    "currency": "CLP",
+    "temp": 289.101122,
+    "humidity": 61,
+    "internetSpeed": 100
+  },
+  {
+    "name": "Bogota",
+    "country": "CO",
+    "region": "DC",
+    "cost": "2800000",
+    "currency": "COP",
+    "temp": 287.204512,
+    "humidity": 78,
+    "internetSpeed": 70
+  },
+  {
+    "name": "Lima",
+    "country": "PE",
+    "region": "LIM",
+    "cost": "2600",
+    "currency": "PEN",
+    "temp": 292.809921,
+    "humidity": 82,
+    "internetSpeed": 60
+  },
+  {
+    "name": "Mexico City",
+    "country": "MX",
+    "region": "CMX",
+    "cost": "25000",
+    "currency": "MXN",
+    "temp": 290.402211,
+    "humidity": 58,
+    "internetSpeed": 90
+  },
+  {
+    "name": "Cape Town",
+    "country": "ZA",
+    "region": "WC",
+    "cost": "22000",
+    "currency": "ZAR",
+    "temp": 289.908812,
+    "humidity": 70,
+    "internetSpeed": 80
+  },
+  {
+    "name": "Johannesburg",
+    "country": "ZA",
+    "region": "GP",
+    "cost": "20000",
+    "currency": "ZAR",
+    "temp": 291.101122,
+    "humidity": 52,
+    "internetSpeed": 75
+  },
+  {
+    "name": "Dubai",
+    "country": "AE",
+    "region": "DU",
+    "cost": "9000",
+    "currency": "AED",
+    "temp": 305.804512,
+    "humidity": 60,
+    "internetSpeed": 300
+  },
+  {
+    "name": "Dublin",
+    "country": "IE",
+    "region": "LER",
+    "cost": "3100",
+    "currency": "EUR",
+    "temp": 282.409921,
+    "humidity": 83,
+    "internetSpeed": 200
+  },
+  {
+    "name": "Stockholm",
+    "country": "SE",
+    "region": "AB",
+    "cost": "31000",
+    "currency": "SEK",
+    "temp": 280.102211,
+    "humidity": 77,
+    "internetSpeed": 280
+  }
+]
