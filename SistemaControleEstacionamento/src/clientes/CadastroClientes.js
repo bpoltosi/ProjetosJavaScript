@@ -1,3 +1,5 @@
+const Veiculo = require('../veiculos/Veiculo');
+
 /*
     Cadastro de clientes vinculados (Estudante, Professor, Empresa).
     ClienteAvulso nunca é gerenciado aqui (apenas cadastrads).
@@ -5,6 +7,12 @@
     Observação: listarBloqueados() chama podeAutorizarEntrada() sem argumentos.
     Professor usa placaAtualEstacionada (conflito de vaga), não inadimplência;
     pode aparecer na lista enquanto um veículo seu estiver dentro.
+
+    Nota (Correção A do plano de correção Fase 1): cliente.placas passou a ser
+    Map<string, Veiculo> (era Set<string>), mas placasCadastradas e
+    mapaPlacaParaCliente continuam indexados por string normalizada — Set/Map
+    de objetos comparariam por referência, não por valor, então usar Veiculo
+    como chave aqui quebraria a checagem de unicidade global.
  */
 
 class CadastroClientes {
@@ -51,12 +59,15 @@ class CadastroClientes {
     if (!cliente) {
       throw new Error('cliente não encontrado para o documento informado');
     }
-    if (this.placasCadastradas.has(placa)) {
+    const chave = Veiculo.normalizar(placa);
+    if (this.placasCadastradas.has(chave)) {
       throw new Error('placa já cadastrada para outro cliente');
     }
-    cliente.adicionarPlaca(placa);
-    this.placasCadastradas.add(placa);
-    this.mapaPlacaParaCliente.set(placa, cliente);
+    // adicionarPlaca devolve a placa já normalizada (mesma chave usada em
+    // cliente.placas), garantindo que os índices abaixo fiquem consistentes.
+    const placaRegistrada = cliente.adicionarPlaca(placa);
+    this.placasCadastradas.add(placaRegistrada);
+    this.mapaPlacaParaCliente.set(placaRegistrada, cliente);
   }
 
   /**
@@ -70,12 +81,13 @@ class CadastroClientes {
     if (!cliente) {
       throw new Error('cliente não encontrado para o documento informado');
     }
-    if (!cliente.placas.has(placa)) {
+    const chave = Veiculo.normalizar(placa);
+    if (!cliente.placas.has(chave)) {
       throw new Error('placa não pertence a este cliente');
     }
-    cliente.removerPlaca(placa);
-    this.placasCadastradas.delete(placa);
-    this.mapaPlacaParaCliente.delete(placa);
+    cliente.removerPlaca(chave);
+    this.placasCadastradas.delete(chave);
+    this.mapaPlacaParaCliente.delete(chave);
   }
 
   /**

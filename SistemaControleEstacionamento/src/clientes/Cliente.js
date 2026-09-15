@@ -1,3 +1,5 @@
+const Veiculo = require('../veiculos/Veiculo');
+
 /*
     Classe abstrata base de cliente do estacionamento.
     Não deve ser instanciada diretamente.
@@ -19,13 +21,18 @@ class Cliente {
     this.documento = documento ?? null;
     /** @type {string|null} */
     this.nome = nome ?? null;
-    /** @type {Set<string>} */
-    this.placas = new Set();
+    /** @type {Map<string, Veiculo>} */
+    this.placas = new Map();
   }
 
   /**
       Adiciona uma placa respeitando o limite do subtipo.
+      Retorna a placa normalizada (chave usada internamente em `placas`),
+      para que quem chamou (ex.: CadastroClientes) possa manter seus próprios
+      índices (Set/Map por string) consistentes com a normalização aplicada
+      aqui.
    * @param {string} placa
+   * @returns {string}
    * @abstract
    */
 
@@ -34,12 +41,13 @@ class Cliente {
   }
 
   /**
-      Remove a placa do conjunto deste cliente.
+      Remove a placa (normalizada) do mapa deste cliente.
    * @param {string} placa
    */
 
   removerPlaca(placa) {
-    this.placas.delete(placa);
+    const chave = Veiculo.normalizar(placa);
+    this.placas.delete(chave);
   }
 
   /**

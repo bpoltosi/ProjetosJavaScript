@@ -1,4 +1,5 @@
 const Cliente = require('./Cliente');
+const Veiculo = require('../veiculos/Veiculo');
 
 /*
   Cliente professor: até 2 placas, entrada gratuita.
@@ -27,7 +28,9 @@ class Professor extends Cliente {
     if (this.placas.size >= 2) {
       throw new Error('professor já possui o limite de 2 placas cadastradas');
     }
-    this.placas.add(placa);
+    const veiculo = new Veiculo(placa);
+    this.placas.set(veiculo.placa, veiculo);
+    return veiculo.placa;
   }
 
   /**

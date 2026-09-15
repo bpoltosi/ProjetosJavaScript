@@ -14,9 +14,16 @@ const InterfaceUsuario = require('./src/interface/InterfaceUsuario');
       4) salva automaticamente ao encerrar (saída normal do menu, Ctrl+C ou
          sinal de término do processo) — o gatilho fica aqui, não dentro de
          App, para manter App sem I/O interativo (regra herdada da Fase 1).
+
+    ESTACIONAMENTO_DIR_DADOS (variável de ambiente, opcional): permite
+    apontar para um diretório de dados alternativo em vez de data/ na raiz
+    do projeto. Uso real: nenhum (o sistema sempre usa data/ por padrão);
+    serve só para o teste automatizado de interface
+    (tests/teste_interface_manual.js) isolar seus CSVs de teste sem tocar
+    nos dados de demonstração reais.
 */
 
-const DIR_DADOS = path.join(__dirname, 'data');
+const DIR_DADOS = process.env.ESTACIONAMENTO_DIR_DADOS || path.join(__dirname, 'data');
 const caminhos = {
   clientes: path.join(DIR_DADOS, 'clientes.csv'),
   tickets: path.join(DIR_DADOS, 'tickets.csv'),
