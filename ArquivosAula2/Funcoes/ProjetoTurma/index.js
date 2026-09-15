@@ -18,3 +18,4 @@ poo.informarNota(1025, 2, 7);
 console.log(`\nAprovados: ${poo.aprovados()}`);
 console.log(`\nReprovados: ${poo.reprovados()}\n`);
 console.log(poo.resultadoFinal());
+console.log(`Media das notas finais: ${poo.mediaNotasFinais()}`);

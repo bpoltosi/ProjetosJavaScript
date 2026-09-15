@@ -1,5 +1,6 @@
 import { validate } from "bycontract";
 import { Aluno } from "./aluno.js";
+import { pipe, map, mean, filter, prop } from "ramda";
 
 export class Turma {
   #numero;
@@ -39,11 +40,17 @@ export class Turma {
   }
 
   aprovados() {
-    return this.#alunos.filter((a) => a.aprovado()).map((a) => a.nome);
+    const filterAprovados = filter(a => a.aprovado());
+    const getNome = prop("nome");
+    const nomesAprovados = pipe(filterAprovados,map(getNome));
+    return nomesAprovados(this.#alunos);
   }
 
   reprovados() {
-    return this.#alunos.filter((a) => !a.aprovado()).map((a) => a.nome);
+    const filterReprovados = filter(a => a.aprovado() == false);
+    const getNome = prop("nome");
+    const nomesReprovados = pipe(filterReprovados,map(getNome));
+    return nomesReprovados(this.#alunos);
   }
 
   resultadoFinal() {
@@ -52,5 +59,9 @@ export class Turma {
       media: a.media(),
       aprovado: a.aprovado(),
     }));
+  }
+
+  mediaNotasFinais(){
+    return pipe(map(a => a.media()), mean)(this.#alunos);
   }
 }
