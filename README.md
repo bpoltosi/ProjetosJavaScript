@@ -1,45 +1,37 @@
 # ProjetosJavaScript
 
-Repositório de estudos e projetos desenvolvidos durante a formação em **JavaScript e Programação Orientada a Objetos (POO)**.
+Repositório de estudos e projetos em **JavaScript**, com exercícios de fundamentos, funções, estruturas de dados, orientação a objetos e aplicações de terminal.
 
-O conteúdo reúne exercícios, experimentos e projetos práticos que acompanham minha evolução na linguagem, indo de fundamentos de funções e arrays até orientação a objetos, exceções, módulos e aplicações mais completas.
+## Organização
 
-## 🎯 Objetivos
-- Consolidar fundamentos de JavaScript.
-- Praticar **Programação Orientada a Objetos**.
-- Desenvolver raciocínio lógico e resolução de problemas.
-- Experimentar diferentes recursos da linguagem.
-- Registrar a evolução dos estudos em projetos executáveis e organizados.
+- `ArquivosAula/` — exemplos de aulas e exercícios: arrays, objetos, classes, exceções, arquivos, estruturas de dados, datas e operações.
+- `ArquivosAula2/` — estudos organizados por tema, incluindo funções, arrow functions, closures, currying, memoização, recursividade e exercícios.
+- `ArquivosAplicativoTrem/` — arquivos de um exercício de modelagem de composições e elementos de trem.
+- `SistemaControleEstacionamento/` — projeto acadêmico de controle de estacionamento, com módulos, regras de negócio, menu de terminal e persistência em CSV.
 
-## 📚 Conteúdos praticados
-- Funções e funções de alta ordem
-- Arrow functions e closures
-- Arrays, Sets e operações sobre coleções
-- Objetos e manipulação de dados
-- Classes e orientação a objetos
-- Encapsulamento e polimorfismo
-- Validação de argumentos
-- Tratamento de exceções
-- Módulos e import/export
-- Manipulação de arquivos
-- Estruturas de dados e lógica de programação
+## Conceitos praticados
 
-## 📁 Organização
-- `ArquivosAula/` — exercícios e exemplos desenvolvidos ao longo das aulas.
-- `ArquivosAula2/` — estudos complementares de funções e recursos da linguagem.
-- `ArquivosAplicativoTrem/` — exercícios relacionados a modelagem e hierarquia de elementos.
-- `SistemaControleEstacionamento/` — projeto mais estruturado, com organização em módulos e persistência de dados.
+JavaScript moderno, funções declaradas e expressões, arrow functions, arrays, objetos, classes, encapsulamento, polimorfismo, closures, recursividade, tratamento de exceções, módulos, leitura e escrita de arquivos e estruturas como filas e pilhas.
 
-A organização pode evoluir conforme novos conteúdos e projetos forem adicionados.
+## Executar exemplos
 
-## ▶️ Como executar
-A maioria dos arquivos é composta por scripts independentes. Para executar um exercício com Node.js:
+Com Node.js instalado:
 
-    node caminho/do/arquivo.js
+```bash
+node caminho/do/arquivo.js
+```
 
-Alguns exercícios utilizam dependências externas. Nesses casos, consulte os imports presentes no próprio arquivo e instale as dependências necessárias antes da execução.
+Para projetos com `package.json`, entre no respectivo diretório, instale as dependências e utilize os scripts declarados:
 
-## 🚧 Status
-**Em desenvolvimento contínuo.**
+```bash
+npm install
+npm start
+```
 
-Este repositório acompanha minha evolução prática em JavaScript. Alguns exercícios representam estudos acadêmicos, enquanto outros são experimentações ou projetos que continuam sendo aprimorados.
+## Projeto em destaque: Sistema de Controle de Estacionamento
+
+Consulte [SistemaControleEstacionamento/README.md](SistemaControleEstacionamento/README.md) para instruções de execução, opções do menu, dados CSV e regras do projeto.
+
+## Status
+
+Repositório de aprendizagem e projetos acadêmicos em evolução. Os exemplos são independentes; nem todos compartilham a mesma configuração ou dependências.
