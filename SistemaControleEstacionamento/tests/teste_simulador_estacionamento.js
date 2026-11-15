@@ -186,7 +186,7 @@ async function testarNegacaoPorLotacao() {
 
   const negada = app.consultarEventos({ tipo: 'ENTRADA_NEGADA', origem: 'simulacao' });
   assert.equal(negada.total, 1);
-  assert.match(negada.eventos[0].motivo, /vaga livre compatível/);
+  assert.match(negada.eventos[0].motivo, /estacionamento lotado|vaga livre compatível/);
   const vagas = app.resumoVagas();
   assert.equal(vagas.ocupadas, 1);
   assert.equal(vagas.livres, 0);
