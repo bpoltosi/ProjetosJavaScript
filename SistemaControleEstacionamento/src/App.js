@@ -7,6 +7,7 @@ const BloqueiosCsv = require('./persistencia/BloqueiosCsv');
 const VeiculosJson = require('./persistencia/VeiculosJson');
 const ClienteAvulso = require('./clientes/ClienteAvulso');
 const GerenciadorVagas = require('./estacionamento/GerenciadorVagas');
+const EstadoVagasJson = require('./persistencia/EstadoVagasJson');
 
 /**
   Fachada do sistema. Continua sem I/O interativo (console.log/leitura de
@@ -129,6 +130,7 @@ class App {
     TicketsCsv.carregar(caminhos.tickets, this.registroDeEntradasESaidas);
     TicketsCsv.reconstruirEstadoDerivado(this.cadastroClientes, this.registroDeEntradasESaidas);
     BloqueiosCsv.carregar(caminhos.bloqueios, this.registroDeEntradasESaidas);
+    EstadoVagasJson.carregar(caminhos.vagas, this.gerenciadorVagas);
     if (this.gerenciadorVagas) {
       for (const ticket of this.registroDeEntradasESaidas.ticketsAbertos.values()) {
         const cliente = this.cadastroClientes.buscarClientePorPlaca(ticket.placa) ?? new ClienteAvulso(ticket.placa);
@@ -148,6 +150,7 @@ class App {
   salvarTudo(caminhos) {
     ClientesCsv.salvar(caminhos.clientes, this.cadastroClientes);
     VeiculosJson.salvar(caminhos.veiculos, this.cadastroClientes);
+    EstadoVagasJson.salvar(caminhos.vagas, this.gerenciadorVagas);
     TicketsCsv.salvar(caminhos.tickets, this.registroDeEntradasESaidas);
     BloqueiosCsv.salvar(caminhos.bloqueios, this.registroDeEntradasESaidas);
   }
