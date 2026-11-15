@@ -91,8 +91,7 @@ async function main() {
     '2',            // Entrada de veículo
     'TST9Z99',      // placa
     '3',            // Saída de veículo
-    'TST9Z99',      // placa
-    'n',            // recusa de pagamento? não
+    'TST9Z99',      // seleciona a placa; cliente cadastrado usa débito em saldo, sem prompt de pagamento na cancela
     '4',            // Consultas e relatórios
     '2',            // situação de um cliente cadastrado
     '99988877766',  // documento
