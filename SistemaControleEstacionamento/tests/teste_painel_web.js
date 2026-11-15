@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const vm = require('node:vm');
 const { criarServidor, criarCaminhos } = require('../server');
 
 async function executar() {
@@ -31,8 +32,14 @@ async function executar() {
     assert.match(html, /id="generationForm"/);
     assert.match(html, /id="eventTerminal"/);
     assert.match(html, /id="startSimulationButton"/);
+    assert.match(html, /id="parkingCanvas"/);
+    assert.match(html, /id="mapCategoryFilter"/);
+    assert.match(html, /id="mapPrevPage"/);
+    assert.match(html, /id="mapNextPage"/);
+    assert.match(html, /\/assets\/pixel-assets\.js/);
     assert.match(html, /\/styles\.css/);
     assert.match(html, /\/app\.js/);
+    assert.ok(html.indexOf('/assets/pixel-assets.js') < html.indexOf('/app.js'), 'assets devem ser carregados antes do renderizador');
     console.log('✅ Página principal entrega assistente de configuração e controles operacionais do painel.');
 
     const cssResposta = await fetch(`${baseUrl}/styles.css`);
@@ -43,12 +50,16 @@ async function executar() {
     assert.match(css, /@media/);
     assert.match(css, /\.vacancy-occupied/);
     assert.match(css, /\.event-terminal/);
+    assert.match(css, /\.canvas-shell/);
+    assert.match(css, /image-rendering: pixelated/);
+    assert.match(css, /\.map-pagination/);
     console.log('✅ Folha de estilos é servida com identidade pixel art e layout responsivo.');
 
     const jsResposta = await fetch(`${baseUrl}/app.js`);
     assert.equal(jsResposta.status, 200);
     assert.match(jsResposta.headers.get('content-type'), /javascript/);
     const javascript = await jsResposta.text();
+    assert.doesNotThrow(() => new vm.Script(javascript, { filename: 'public/app.js' }));
     for (const rota of [
       '/api/configuracao',
       '/api/estado',
@@ -71,8 +82,28 @@ async function executar() {
     assert.match(javascript, /setInterval/);
     assert.match(javascript, /pagamentoRecusado/);
     assert.match(javascript, /origem: 'api'/);
+    assert.match(javascript, /getContext\('2d'\)/);
+    assert.match(javascript, /imageSmoothingEnabled = false/);
+    assert.match(javascript, /mapHitBoxes/);
+    assert.match(javascript, /selecionarVagaNoMapa/);
+    assert.match(javascript, /micro-onibus/);
+    assert.match(javascript, /mapPageSize: 80/);
+    assert.match(javascript, /ParkingPixelAssets/);
     assert.doesNotMatch(javascript, /react-dom|createRoot\(|new Phaser\./i);
-    console.log('✅ JavaScript do painel usa API HTTP, polling e renderização segura de texto sem framework.');
+    const idsHtml = new Set(Array.from(html.matchAll(/\bid="([^"]+)"/g), (match) => match[1]));
+    const idsConsultados = Array.from(javascript.matchAll(/\$\('#([^']+)'\)/g), (match) => match[1]);
+    idsConsultados.forEach((id) => assert.ok(idsHtml.has(id), `o painel consulta #${id}, que deve existir no HTML`));
+    const assetsResposta = await fetch(`${baseUrl}/assets/pixel-assets.js`);
+    assert.equal(assetsResposta.status, 200);
+    assert.match(assetsResposta.headers.get('content-type'), /javascript/);
+    const assets = await assetsResposta.text();
+    assert.doesNotThrow(() => new vm.Script(assets, { filename: 'public/assets/pixel-assets.js' }));
+    for (const tipo of ['motocicleta', 'compacto', 'hatch', 'sedan', 'suv', 'picape', 'van', 'micro-onibus']) {
+      assert.ok(assets.includes(tipo), `asset pixel art deve incluir o tipo ${tipo}`);
+    }
+    assert.ok(assets.includes('asphaltDots'));
+    assert.ok(assets.includes('vehicleWindows'));
+    console.log('✅ Assets pixel art são servidos separadamente e contêm sprites e tiles originais.');
 
     const health = await fetch(`${baseUrl}/api/health`);
     const dadosHealth = await health.json();

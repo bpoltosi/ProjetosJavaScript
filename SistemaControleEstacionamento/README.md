@@ -141,3 +141,27 @@ curl -X POST http://127.0.0.1:3000/api/simulacao/iniciar \
 ```
 
 O encerramento do servidor também encerra a simulação e salva o estado operacional.
+
+### Mapa top-down em Canvas 2D
+
+O painel web apresenta o mapa top-down ortográfico no Canvas 2D. Cada posição representa
+uma vaga retornada por `GET /api/vagas`; não existem vagas simuladas apenas na camada visual.
+Os setores usam suas categorias e cores configuradas. O desenho reflete os estados livre,
+ocupado e bloqueado, e consulta `GET /api/veiculos/estacionados` para posicionar os veículos
+na vaga atribuída pelo backend.
+
+Os sprites dos veículos são pixel art original e ficam separados do renderizador em
+`public/assets/pixel-assets.js`. O arquivo mantém padrões por tipo (motocicleta, compacto,
+hatch, sedan, SUV, picape, van e micro-ônibus) e a paleta/tiles do cenário. O Canvas desativa
+suavização de imagem para preservar bordas nítidas.
+
+Para estacionamentos com muitas vagas, o mapa apresenta blocos paginados. O filtro por categoria
+permite focar um setor; clique numa vaga para selecionar o slot e consultar seu estado, ou num
+veículo para abrir detalhes de placa, tipo, cor, cliente, categoria, vaga e horário de entrada.
+A seleção não altera o estado de negócio: entradas, saídas e bloqueios continuam sendo
+executados exclusivamente pelos endpoints do backend.
+
+Arquivos principais:
+- `public/app.js`: sincronização HTTP, paginação, seleção e renderização do mapa.
+- `public/assets/pixel-assets.js`: sprites, cores e padrões de pixel art.
+- `public/styles.css`: moldura responsiva e tratamento pixelated do Canvas.
