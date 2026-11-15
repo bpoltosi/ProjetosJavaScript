@@ -18,7 +18,7 @@ class Estudante extends Cliente {
    */
 
   constructor(documento, nome, saldo = 0) {
-    super(documento, nome);
+    super(documento, nome, { categoriaId: 'estudante' });
     /** @type {number} */
     this.saldo = saldo;
   }
@@ -28,11 +28,11 @@ class Estudante extends Cliente {
    * @param {string} placa
   */
 
-  adicionarPlaca(placa) {
+  adicionarPlaca(placa, caracteristicas) {
     if (this.placas.size >= 1) {
       throw new Error('estudante já possui placa cadastrada');
     }
-    const veiculo = new Veiculo(placa);
+    const veiculo = new Veiculo(placa, caracteristicas);
     this.placas.set(veiculo.placa, veiculo);
     return veiculo.placa;
   }
