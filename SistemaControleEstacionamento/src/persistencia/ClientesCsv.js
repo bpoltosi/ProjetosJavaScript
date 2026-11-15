@@ -93,6 +93,7 @@ function carregar(caminho, cadastroClientes, configuracao = null) {
           throw new Error(`perfil personalizado "${categoriaIdSalva}" não existe na configuração (documento ${documento})`);
         }
         cliente = new ClientePersonalizado(documento, nome, perfil);
+        cadastroClientes.cadastrarCliente(cliente);
         break;
       }
       default:
