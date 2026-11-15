@@ -221,6 +221,40 @@ async function testarTentativaDuplicada() {
   console.log('✅ Leituras duplicadas são recusadas pelo domínio e registradas como eventos de simulação.');
 }
 
+async function testarInelegibilidadeFinanceira() {
+  const ambiente = criarAmbiente(1);
+  const { app } = ambiente;
+  const simulador = app.simulador;
+
+  simulador.iniciar({
+    categoriaId: 'estudante',
+    quantidadeVeiculos: 1,
+    intervaloChegadaMs: 1000,
+    permanenciaMinMs: 1000,
+    permanenciaMaxMs: 1000,
+    probabilidadeTentativaDuplicada: 0,
+  });
+
+  await simulador.executarCiclo();
+  const placa = Array.from(simulador.veiculosAtivos.keys())[0];
+  const cliente = app.buscarClientePorPlaca(placa);
+  assert.equal(cliente.saldo, 0);
+  assert.equal(app.veiculoEstaDentro(placa), true);
+
+  ambiente.avancar(1000);
+  await simulador.executarCiclo();
+  assert.equal(cliente.saldo, -15);
+  assert.equal(app.veiculoEstaDentro(placa), false);
+  assert.equal(simulador.estatisticas.entradasNegadas, 1);
+
+  const negada = app.consultarEventos({ tipo: 'ENTRADA_NEGADA', placa, origem: 'simulacao' });
+  assert.equal(negada.total, 1);
+  assert.match(negada.eventos[0].motivo, /não autorizada/);
+
+  await simulador.encerrar();
+  console.log('✅ Inelegibilidade real por saldo negativo é aplicada pelo domínio e registrada no histórico da simulação.');
+}
+
 async function testarAgendamentoAutomatico() {
   const ambiente = criarAmbiente(2);
   const simulador = ambiente.app.simulador;
@@ -323,6 +357,7 @@ async function executar() {
   await testarCicloDeVidaERelogio();
   await testarNegacaoPorLotacao();
   await testarTentativaDuplicada();
+  await testarInelegibilidadeFinanceira();
   await testarAgendamentoAutomatico();
   await testarApiDaSimulacao();
 }
