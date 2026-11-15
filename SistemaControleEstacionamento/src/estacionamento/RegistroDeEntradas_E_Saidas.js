@@ -1,6 +1,9 @@
 const TicketEstacionamento = require('./TicketEstacionamento');
 const ClienteAvulso = require('../clientes/ClienteAvulso');
 const DescontoClienteFrequente = require('../descontos/DescontoClienteFrequente');
+const Estudante = require('../clientes/Estudante');
+const Professor = require('../clientes/Professor');
+const Empresa = require('../clientes/Empresa');
 
 /*
   Orquestra entradas, saídas, capacidade, bloqueio de avulsos e descontos.
@@ -85,6 +88,21 @@ class RegistroDeEntradas_E_Saidas {
       }
 
       const clienteCadastrado = this.cadastroClientes.buscarClientePorPlaca(placa);
+      if (clienteCadastrado instanceof Empresa &&
+          !clienteCadastrado.inadimplente &&
+          clienteCadastrado.dataVencimentoBoleto !== null &&
+          clienteCadastrado.saldoDevedor > 0 &&
+          new Date() > clienteCadastrado.dataVencimentoBoleto) {
+        this._registrarEventos([{
+          tipo: 'CLIENTE_BLOQUEADO',
+          resultado: 'bloqueado',
+          placa,
+          categoriaCliente: clienteCadastrado.categoriaId,
+          origem,
+          motivo: 'Boleto vencido com saldo devedor pendente.',
+          detalhes: `Empresa ${clienteCadastrado.nome} bloqueada por inadimplência.`,
+        }]);
+      }
       if (clienteCadastrado) {
         const autorizado = clienteCadastrado.podeAutorizarEntrada({
           ticketsAbertos: this.ticketsAbertos,
@@ -182,6 +200,20 @@ class RegistroDeEntradas_E_Saidas {
     }
 
     const dataHoraSaida = new Date();
+    if (opcoes.pagamentoRecusado === true && clienteCadastrado) {
+      const erro = new Error('recusa de pagamento não se aplica a clientes cadastrados; a cobrança é feita por saldo, boleto ou gratuidade');
+      this._registrarNegacao({
+        ...this._contextoEvento(placa, clienteContexto, veiculo,
+          this.gerenciadorVagas?.buscarPorPlaca(placa) ?? null,
+          origem, {
+            resultado: 'negado',
+            motivo: erro.message,
+            detalhes: 'Saída mantida em aberto porque clientes cadastrados não pagam na cancela.',
+          }),
+        tipo: 'SAIDA_NEGADA',
+      });
+      throw erro;
+    }
     let custoOriginal;
     let descontoId = 'nenhum';
     let valorDesconto = 0;
@@ -189,12 +221,29 @@ class RegistroDeEntradas_E_Saidas {
     let registrarDebito = false;
     let debitarSaldo = false;
     let pagamentoRecusado = false;
+    let saldoEstudanteProjetado = null;
+    let debitoEmpresaProjetado = null;
+    let politicaCobranca = 'avulso-pagamento-na-saida';
 
     if (clienteCadastrado) {
       custoOriginal = clienteCadastrado.calcularCusto(ticket.dataHoraEntrada, dataHoraSaida);
       valorPago = custoOriginal;
       debitarSaldo = typeof clienteCadastrado.debitar === 'function';
       registrarDebito = typeof clienteCadastrado.registrarDebito === 'function';
+
+      if (clienteCadastrado instanceof Estudante) {
+        politicaCobranca = 'debito-em-saldo';
+        saldoEstudanteProjetado = clienteCadastrado.saldo - custoOriginal;
+      } else if (clienteCadastrado instanceof Empresa) {
+        politicaCobranca = 'debito-para-boleto';
+        debitoEmpresaProjetado = clienteCadastrado.saldoDevedor + custoOriginal;
+        // Empresa acumula um débito para boleto; nenhum valor é pago na cancela.
+        valorPago = 0;
+      } else if (clienteCadastrado instanceof Professor) {
+        politicaCobranca = 'gratuito';
+      } else {
+        politicaCobranca = 'perfil-personalizado-gratuito';
+      }
     } else {
       const historico = this.buscarTicketsPorPlacaEPeriodo(
         placa,
@@ -238,11 +287,32 @@ class RegistroDeEntradas_E_Saidas {
           : `Saída processada. Valor pago: ${valorPago}.`,
       }
     );
+    dadosEvento.detalhes = pagamentoRecusado
+      ? `Pagamento recusado. Valor devido: ${custoOriginal - valorDesconto}; placa será bloqueada.`
+      : `Política de cobrança: ${politicaCobranca}. Valor devido: ${custoOriginal - valorDesconto}; valor pago na saída: ${valorPago}.`;
+
     const eventos = [{
       ...dadosEvento,
       tipo: pagamentoRecusado ? 'SAIDA_PAGAMENTO_RECUSADO' : 'SAIDA_CONCLUIDA',
       motivo: pagamentoRecusado ? 'Pagamento recusado pelo cliente.' : null,
     }];
+    if (saldoEstudanteProjetado !== null && saldoEstudanteProjetado < 0 && clienteCadastrado.saldo >= 0) {
+      eventos.push({
+        ...dadosEvento,
+        tipo: 'CLIENTE_BLOQUEADO',
+        resultado: 'bloqueado',
+        motivo: 'Saldo pré-pago insuficiente após a cobrança da permanência.',
+        detalhes: `Estudante ${clienteCadastrado.nome} ficou com saldo ${saldoEstudanteProjetado.toFixed(2)} e não poderá fazer novas entradas até recarga.`,
+      });
+    }
+    if (debitoEmpresaProjetado !== null) {
+      eventos.push({
+        ...dadosEvento,
+        tipo: 'DEBITO_EMPRESA_REGISTRADO',
+        resultado: 'pendente',
+        detalhes: `Débito de ${custoOriginal.toFixed(2)} adicionado ao saldo da empresa. Total pendente: ${debitoEmpresaProjetado.toFixed(2)}.`,
+      });
+    }
     if (vagaId) {
       eventos.push({
         ...dadosEvento,
