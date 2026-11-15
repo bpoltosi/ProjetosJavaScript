@@ -220,122 +220,10 @@
   }
 
 
-  const SPRITES = {
-    motocicleta: [
-      '00300',
-      '01310',
-      '11311',
-      '01310',
-      '01310',
-      '01310',
-      '11311',
-      '01310',
-      '00300',
-    ],
-    compacto: [
-      '0033300',
-      '0133310',
-      '1133331',
-      '1132231',
-      '1132231',
-      '1133331',
-      '1133331',
-      '1132231',
-      '1133331',
-      '0133310',
-      '0033300',
-    ],
-    hatch: [
-      '0033300',
-      '0133310',
-      '1133331',
-      '1122231',
-      '1132231',
-      '1133331',
-      '1133331',
-      '1132231',
-      '1133331',
-      '0133310',
-      '0033300',
-    ],
-    sedan: [
-      '0033300',
-      '0133310',
-      '1133331',
-      '1132231',
-      '1122221',
-      '1133331',
-      '1133331',
-      '1132231',
-      '1132231',
-      '1133331',
-      '0133310',
-      '0033300',
-      '0033300',
-    ],
-    suv: [
-      '0133310',
-      '1133331',
-      '1133331',
-      '1122221',
-      '1122221',
-      '1133331',
-      '1133331',
-      '1133331',
-      '1122221',
-      '1122221',
-      '1133331',
-      '0133310',
-      '0033300',
-    ],
-    picape: [
-      '0133310',
-      '1133331',
-      '1133331',
-      '1122221',
-      '1122221',
-      '1133331',
-      '1144441',
-      '1144441',
-      '1144441',
-      '1133331',
-      '1122221',
-      '0133310',
-      '0033300',
-    ],
-    van: [
-      '0133310',
-      '1133331',
-      '1133331',
-      '1122221',
-      '1122221',
-      '1122221',
-      '1122221',
-      '1133331',
-      '1133331',
-      '1122221',
-      '1122221',
-      '1133331',
-      '0133310',
-    ],
-    'micro-onibus': [
-      '0133310',
-      '1133331',
-      '1133331',
-      '1122221',
-      '1122221',
-      '1122221',
-      '1122221',
-      '1122221',
-      '1122221',
-      '1133331',
-      '1133331',
-      '1122221',
-      '1122221',
-      '0133310',
-      '0033300',
-    ],
-  };
+  const PIXEL_ASSETS = window.ParkingPixelAssets || {};
+  const SPRITES = PIXEL_ASSETS.sprites || {};
+  const MAP_PALETTE = PIXEL_ASSETS.palette || {};
+
 
   function corParaPixel(cor, fallback = '#A7ADB4') {
     return typeof cor === 'string' && /^#[0-9a-fA-F]{6}$/.test(cor) ? cor : fallback;
@@ -351,16 +239,16 @@
     const altura = linhas * pixel;
     const inicioX = Math.floor(x - largura / 2);
     const inicioY = Math.floor(y - altura / 2);
-    const body = corParaPixel(veiculo?.corVeiculo || veiculo?.cor, '#A7ADB4');
+    const body = corParaPixel(veiculo?.corVeiculo || veiculo?.cor, MAP_PALETTE.vehicleFallback || '#A7ADB4');
 
     for (let linha = 0; linha < sprite.length; linha += 1) {
       for (let coluna = 0; coluna < sprite[linha].length; coluna += 1) {
         const caractere = sprite[linha][coluna];
         if (caractere === '0') continue;
         if (caractere === '1') ctx.fillStyle = body;
-        else if (caractere === '2') ctx.fillStyle = '#9DD3DE';
-        else if (caractere === '3') ctx.fillStyle = '#111A18';
-        else if (caractere === '4') ctx.fillStyle = '#F5D77B';
+        else if (caractere === '2') ctx.fillStyle = MAP_PALETTE.vehicleWindows || '#9DD3DE';
+        else if (caractere === '3') ctx.fillStyle = MAP_PALETTE.vehicleTires || '#111A18';
+        else if (caractere === '4') ctx.fillStyle = MAP_PALETTE.vehicleLights || '#F5D77B';
         else ctx.fillStyle = body;
         ctx.fillRect(inicioX + coluna * pixel, inicioY + linha * pixel, pixel, pixel);
       }
@@ -392,30 +280,31 @@
   }
 
   function desenharFundoMapa(ctx, largura, altura) {
-    ctx.fillStyle = '#26372F';
+    ctx.fillStyle = MAP_PALETTE.asphalt || '#26372F';
     ctx.fillRect(0, 0, largura, altura);
-    for (let y = 40; y < altura; y += 24) {
-      for (let x = 8; x < largura; x += 28) {
-        if (((x / 28 + y / 24) % 3) === 0) {
-          ctx.fillStyle = '#2B3D34';
-          ctx.fillRect(x, y, 2, 2);
-        }
+    const textura = MAP_PALETTE.asphaltDots || [[8, 8], [18, 13], [12, 21], [25, 4]];
+    for (let y = 40; y < altura; y += 28) {
+      for (let x = 8; x < largura; x += 32) {
+        textura.forEach(([dx, dy]) => {
+          ctx.fillStyle = MAP_PALETTE.asphaltTile || '#2B3D34';
+          ctx.fillRect(x + dx, y + dy, 2, 2);
+        });
       }
     }
 
-    ctx.fillStyle = '#17251F';
+    ctx.fillStyle = MAP_PALETTE.header || '#17251F';
     ctx.fillRect(0, 0, largura, 36);
-    ctx.fillStyle = '#AFCB9A';
+    ctx.fillStyle = MAP_PALETTE.headerText || '#AFCB9A';
     ctx.font = 'bold 9px "Lucida Console", monospace';
     ctx.textAlign = 'left';
     ctx.fillText('ENTRADA ▶', 12, 22);
     ctx.textAlign = 'center';
-    ctx.fillStyle = '#D8E4CF';
+    ctx.fillStyle = MAP_PALETTE.roadText || '#D8E4CF';
     ctx.fillText('PISTA DE CIRCULAÇÃO', largura / 2, 22);
     ctx.textAlign = 'right';
     ctx.fillText('SAÍDA ▶', largura - 12, 22);
 
-    ctx.strokeStyle = '#E4D28A';
+    ctx.strokeStyle = MAP_PALETTE.roadStripe || '#E4D28A';
     ctx.lineWidth = 2;
     ctx.setLineDash([8, 7]);
     ctx.beginPath();
@@ -427,17 +316,14 @@
 
   function desenharVaga(ctx, vaga, caixa, selecionada, veiculo) {
     const status = vaga.status || 'livre';
-    const cores = status === 'ocupada'
-      ? { fundo: '#23485A', borda: '#87B8C9', texto: '#E1F2F2' }
-      : status === 'bloqueada'
-        ? { fundo: '#553432', borda: '#D17A70', texto: '#FFE0D9' }
-        : { fundo: '#294A35', borda: '#83B77D', texto: '#DCF0C8' };
+    const estados = MAP_PALETTE.states || {};
+    const cores = estados[status] || estados.livre || { fundo: '#294A35', borda: '#83B77D', texto: '#DCF0C8' };
 
-    ctx.fillStyle = '#14221C';
+    ctx.fillStyle = MAP_PALETTE.slotShadow || '#14221C';
     ctx.fillRect(caixa.x + 2, caixa.y + 3, caixa.w, caixa.h);
     ctx.fillStyle = cores.fundo;
     ctx.fillRect(caixa.x, caixa.y, caixa.w, caixa.h);
-    ctx.strokeStyle = selecionada ? '#F4D273' : cores.borda;
+    ctx.strokeStyle = selecionada ? (MAP_PALETTE.selection || '#F4D273') : cores.borda;
     ctx.lineWidth = selecionada ? 3 : 2;
     ctx.strokeRect(caixa.x + 1, caixa.y + 1, caixa.w - 2, caixa.h - 2);
 
@@ -558,7 +444,7 @@
       desenharVaga(ctx, caixa.vaga, caixa, selecionada, veiculo);
     });
 
-    ctx.fillStyle = '#D8E6D1';
+    ctx.fillStyle = MAP_PALETTE.roadText || '#D8E6D1';
     ctx.font = 'bold 8px "Lucida Console", monospace';
     ctx.textAlign = 'right';
     ctx.fillText(\`PÁGINA \${state.mapPage + 1}/\${paginas}\`, largura - 13, altura - 7);
