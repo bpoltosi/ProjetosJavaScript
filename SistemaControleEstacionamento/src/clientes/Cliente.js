@@ -12,7 +12,7 @@ class Cliente {
    * @param {string|null} nome
    */
 
-  constructor(documento, nome) {
+  constructor(documento, nome, metadados = {}) {
     if (new.target === Cliente) {
       throw new Error('Cliente é abstrata e não pode ser instanciada diretamente');
     }
@@ -21,6 +21,8 @@ class Cliente {
     this.documento = documento ?? null;
     /** @type {string|null} */
     this.nome = nome ?? null;
+    this.categoriaId = metadados.categoriaId ?? null;
+    this.possuiCredencialAcessibilidade = metadados.possuiCredencialAcessibilidade === true;
     /** @type {Map<string, Veiculo>} */
     this.placas = new Map();
   }
