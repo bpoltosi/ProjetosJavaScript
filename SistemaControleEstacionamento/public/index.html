@@ -80,8 +80,20 @@
 
           <article class="panel yard-panel">
             <div class="panel-heading"><div><p class="eyebrow">PÁTIO / DADOS REAIS</p><h2>Vagas do estacionamento</h2></div><span class="legend-inline"><i class="legend-free"></i> Livre <i class="legend-occupied"></i> Ocupada <i class="legend-blocked"></i> Bloqueada</span></div>
-            <div class="map-placeholder"><div class="map-placeholder-top"><span>VISÃO TOP-DOWN</span><span>MAPA CANVAS · BLOCO 10</span></div><p>ÁREA DO MAPA VISUAL</p><small>O Canvas 2D e os sprites pixel art entram no próximo bloco. As vagas abaixo já refletem o estado atual da API.</small></div>
-            <div id="vacancyGrid" class="vacancy-grid" aria-label="Vagas reais do backend"><p class="empty-state">Carregando vagas...</p></div>
+            <div class="map-toolbar">
+              <span class="map-toolbar-label">VISÃO TOP-DOWN · CANVAS 2D</span>
+              <label class="map-filter"><span>CATEGORIA</span><select id="mapCategoryFilter"><option value="">TODAS</option></select></label>
+              <div class="map-pagination">
+                <button id="mapPrevPage" class="icon-button map-page-button" type="button" aria-label="Página anterior">‹</button>
+                <span id="mapPageLabel">PÁGINA 1 / 1</span>
+                <button id="mapNextPage" class="icon-button map-page-button" type="button" aria-label="Próxima página">›</button>
+              </div>
+            </div>
+            <div id="canvasShell" class="canvas-shell">
+              <canvas id="parkingCanvas" width="880" height="360" role="img" aria-label="Mapa top-down do estacionamento com vagas reais">Seu navegador não oferece suporte ao Canvas 2D.</canvas>
+            </div>
+            <p id="mapCaption" class="map-caption">Cada vaga no mapa corresponde a um identificador persistido no backend. Clique em uma vaga para ver seus dados.</p>
+            <div id="vacancyGrid" class="vacancy-grid" aria-label="Resumo das vagas reais do backend"><p class="empty-state">Carregando vagas...</p></div>
             <div class="yard-footer"><span id="vacancySummary" class="tiny muted">Aguardando dados...</span><button id="showAllVacanciesButton" class="text-button" type="button">VER TODAS</button></div>
           </article>
 
