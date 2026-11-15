@@ -152,7 +152,10 @@ function executar() {
     const appRestaurado = new App(configuracao);
     appRestaurado.carregarTudo(caminhos);
     assert.equal(appRestaurado.listarClientes().length, app.listarClientes().length);
-    assert.equal(appRestaurado.listarClientes().filter((cliente) => cliente.categoriaId === 'funcionario').length, 4);
+    assert.equal(
+      appRestaurado.listarClientes().filter((cliente) => cliente.categoriaId === 'funcionario').length,
+      app.listarClientes().filter((cliente) => cliente.categoriaId === 'funcionario').length
+    );
     assert.equal(appRestaurado.listarClientes().find((cliente) => cliente.categoriaId === 'funcionario').constructor.name, 'ClientePersonalizado');
     assert.equal(appRestaurado.registroEventos.totalEventos(), app.registroEventos.totalEventos());
     assert.ok(appRestaurado.listarClientes().flatMap((cliente) => Array.from(cliente.placas.values())).every((veiculo) => veiculo.cor && veiculo.tipo));
