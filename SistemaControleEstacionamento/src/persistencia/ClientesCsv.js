@@ -2,6 +2,7 @@ const { lerLinhas, escreverLinhas } = require('./CsvUtil');
 const Estudante = require('../clientes/Estudante');
 const Professor = require('../clientes/Professor');
 const Empresa = require('../clientes/Empresa');
+const ClientePersonalizado = require('../clientes/ClientePersonalizado');
 
 /*
   Leitura e escrita do arquivo de clientes pré-cadastrados (Estudante, Professor,
@@ -35,7 +36,7 @@ const TIPO_EMPRESA = 'Empresa';
  * @param {import('../clientes/CadastroClientes')} cadastroClientes
 */
 
-function carregar(caminho, cadastroClientes) {
+function carregar(caminho, cadastroClientes, configuracao = null) {
   const linhas = lerLinhas(caminho);
 
   for (const linha of linhas) {
@@ -45,10 +46,12 @@ function carregar(caminho, cadastroClientes) {
       .map((placa) => placa.trim())
       .filter((placa) => placa.length > 0);
 
+    const [tipoBase, categoriaIdSalva] = String(tipo ?? '').split(':', 2);
     let cliente;
-    switch (tipo) {
+    switch (tipoBase) {
       case TIPO_ESTUDANTE: {
         cliente = new Estudante(documento, nome, 0);
+        if (categoriaIdSalva) cliente.categoriaId = categoriaIdSalva;
         cadastroClientes.cadastrarCliente(cliente);
         const saldo = campoEspecifico === '' || campoEspecifico == null
           ? 0
@@ -60,11 +63,13 @@ function carregar(caminho, cadastroClientes) {
       }
       case TIPO_PROFESSOR: {
         cliente = new Professor(documento, nome);
+        if (categoriaIdSalva) cliente.categoriaId = categoriaIdSalva;
         cadastroClientes.cadastrarCliente(cliente);
         break;
       }
       case TIPO_EMPRESA: {
         cliente = new Empresa(documento, nome);
+        if (categoriaIdSalva) cliente.categoriaId = categoriaIdSalva;
         cadastroClientes.cadastrarCliente(cliente);
         const debito = campoEspecifico === '' || campoEspecifico == null
           ? 0
@@ -80,6 +85,15 @@ function carregar(caminho, cadastroClientes) {
           // podeAutorizarEntrada() veria um valor desatualizado logo após o load.
           cliente.verificarVencimento(new Date());
         }
+        break;
+      }
+      case 'Personalizado': {
+        const perfil = configuracao?.perfisCliente?.find((item) => item.id === categoriaIdSalva);
+        if (!perfil) {
+          throw new Error(`perfil personalizado "${categoriaIdSalva}" não existe na configuração (documento ${documento})`);
+        }
+        cliente = new ClientePersonalizado(documento, nome, perfil);
+        cadastroClientes.cadastrarCliente(cliente);
         break;
       }
       default:
@@ -118,17 +132,20 @@ function salvar(caminho, cadastroClientes) {
     let dataVencimentoStr = '';
 
     if (cliente instanceof Estudante) {
-      tipo = TIPO_ESTUDANTE;
+      tipo = cliente.categoriaId === 'estudante' ? TIPO_ESTUDANTE : `${TIPO_ESTUDANTE}:${cliente.categoriaId}`;
       campoEspecifico = cliente.saldo;
     } else if (cliente instanceof Professor) {
-      tipo = TIPO_PROFESSOR;
+      tipo = cliente.categoriaId === 'professor' ? TIPO_PROFESSOR : `${TIPO_PROFESSOR}:${cliente.categoriaId}`;
       campoEspecifico = '';
     } else if (cliente instanceof Empresa) {
-      tipo = TIPO_EMPRESA;
+      tipo = cliente.categoriaId === 'empresa' ? TIPO_EMPRESA : `${TIPO_EMPRESA}:${cliente.categoriaId}`;
       campoEspecifico = cliente.saldoDevedor;
       dataVencimentoStr = cliente.dataVencimentoBoleto
         ? cliente.dataVencimentoBoleto.toISOString()
         : '';
+    } else if (cliente instanceof ClientePersonalizado) {
+      tipo = `Personalizado:${cliente.categoriaId}`;
+      campoEspecifico = '';
     } else {
       throw new Error(
         `tipo de cliente não suportado pela persistência: ${cliente.constructor.name}`

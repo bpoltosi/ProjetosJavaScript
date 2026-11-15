@@ -9,6 +9,7 @@ const ClienteAvulso = require('./clientes/ClienteAvulso');
 const GerenciadorVagas = require('./estacionamento/GerenciadorVagas');
 const EstadoVagasJson = require('./persistencia/EstadoVagasJson');
 const RegistroEventos = require('./estacionamento/RegistroEventos');
+const GeradorClientes = require('./estacionamento/GeradorClientes');
 
 /**
   Fachada do sistema. Continua sem I/O interativo (console.log/leitura de
@@ -32,6 +33,7 @@ class App {
       this.cadastroClientes,
       this.registroDeEntradasESaidas
     );
+    this.geradorClientes = new GeradorClientes(this);
   }
 
   /**
@@ -59,6 +61,10 @@ class App {
 
   cadastrarCliente(cliente) {
     return this.cadastroClientes.cadastrarCliente(cliente);
+  }
+
+  gerarClientes(opcoes) {
+    return this.geradorClientes.gerar(opcoes);
   }
 
   /**
@@ -169,7 +175,7 @@ class App {
 
   carregarTudo(caminhos) {
     if (caminhos.eventos) this.registroEventos.carregar(caminhos.eventos);
-    ClientesCsv.carregar(caminhos.clientes, this.cadastroClientes);
+    ClientesCsv.carregar(caminhos.clientes, this.cadastroClientes, this.configuracao);
     VeiculosJson.carregar(caminhos.veiculos, this.cadastroClientes);
     TicketsCsv.carregar(caminhos.tickets, this.registroDeEntradasESaidas);
     TicketsCsv.reconstruirEstadoDerivado(this.cadastroClientes, this.registroDeEntradasESaidas);

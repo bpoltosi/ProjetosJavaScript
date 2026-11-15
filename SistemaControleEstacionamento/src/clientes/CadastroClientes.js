@@ -90,6 +90,18 @@ class CadastroClientes {
     this.mapaPlacaParaCliente.delete(chave);
   }
 
+  removerCliente(documento) {
+    const cliente = this.clientesPorDocumento.get(documento);
+    if (!cliente) return false;
+
+    for (const placa of cliente.placas.keys()) {
+      this.placasCadastradas.delete(placa);
+      this.mapaPlacaParaCliente.delete(placa);
+    }
+    this.clientesPorDocumento.delete(documento);
+    return true;
+  }
+
   /**
    * @param {string} documento
    * @returns {import('./Cliente')|null}
