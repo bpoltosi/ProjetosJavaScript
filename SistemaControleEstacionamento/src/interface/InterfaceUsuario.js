@@ -41,6 +41,7 @@ class InterfaceUsuario {
       console.log('5) Salvar dados agora');
       console.log('6) Sair');
       console.log('7) Terminal operacional (histórico de eventos)');
+      console.log('8) Financeiro e regularização de bloqueios');
 
       const opcao = (await this.rl.question('Escolha uma opção: ')).trim();
 
@@ -65,6 +66,9 @@ class InterfaceUsuario {
           break;
         case '7':
           await this._submenuEventos();
+          break;
+        case '8':
+          await this._submenuRegularizacao();
           break;
         default:
           console.log('Opção inválida.');
@@ -166,22 +170,120 @@ class InterfaceUsuario {
 
   async _fluxoSaida() {
     console.log('\n--- Saída de Veículo ---');
-    const placa = (await this.rl.question('Placa: ')).trim();
-    const recusaStr = (await this.rl.question('Houve recusa de pagamento? (s/n, só relevante para avulso): '))
-      .trim()
-      .toLowerCase();
+    const tickets = Array.from(this.app.registroDeEntradasESaidas.ticketsAbertos.values());
+
+    if (tickets.length > 0) {
+      console.log('Veículos atualmente estacionados:');
+      tickets.forEach((ticket, indice) => {
+        const cliente = this.app.buscarClientePorPlaca(ticket.placa);
+        const veiculo = cliente?.placas.get(ticket.placa);
+        console.log(`${indice + 1}) ${ticket.placa} | ${veiculo?.tipo ?? 'avulso'} | ${cliente?.categoriaId ?? 'avulso'} | ${ticket.vagaId ?? 'sem vaga'} | entrada ${ticket.dataHoraEntrada.toLocaleString()}`);
+      });
+    }
+
+    const escolha = (await this.rl.question(
+      tickets.length > 0
+        ? 'Informe o número da lista ou a placa (0 para cancelar): '
+        : 'Nenhum veículo listado. Informe a placa para localizar: '
+    )).trim();
+    if (escolha === '0') return;
+
+    const indice = /^\d+$/.test(escolha) ? Number(escolha) - 1 : -1;
+    const placa = indice >= 0 ? tickets[indice]?.placa : escolha.toUpperCase();
+    if (!placa) {
+      console.log('❌ Seleção inválida. Nenhum veículo foi alterado.');
+      return;
+    }
+
+    const cliente = this.app.buscarClientePorPlaca(placa);
+    let pagamentoRecusado = false;
+    if (!cliente) {
+      pagamentoRecusado = (await this.rl.question('Pagamento do cliente avulso será recusado? (s/n): '))
+        .trim().toLowerCase() === 's';
+    } else if (cliente instanceof Estudante) {
+      console.log(`Cobrança: débito no saldo pré-pago (saldo atual: R$ ${cliente.saldo.toFixed(2)}).`);
+    } else if (cliente instanceof Empresa) {
+      console.log(`Cobrança: débito para boleto (pendente atual: R$ ${cliente.saldoDevedor.toFixed(2)}).`);
+    } else if (cliente instanceof Professor) {
+      console.log('Cobrança: gratuita. Não há pagamento na saída.');
+    } else {
+      console.log('Cobrança: perfil personalizado gratuito até existir política específica.');
+    }
 
     try {
-      const ticket = this.app.processarSaida(placa, { pagamentoRecusado: recusaStr === 's' });
+      const ticket = this.app.processarSaida(placa, { pagamentoRecusado });
       console.log('✅ Saída processada:');
       console.log(`   Entrada: ${ticket.dataHoraEntrada.toLocaleString()}`);
       console.log(`   Saída:   ${ticket.dataHoraSaida.toLocaleString()}`);
-      console.log(`   Custo original: ${ticket.custoOriginal}`);
-      console.log(`   Desconto (${ticket.descontoId}): ${ticket.valorDesconto}`);
-      console.log(`   Valor devido: ${ticket.valorDevido}`);
-      console.log(`   Valor pago: ${ticket.valorPago}`);
+      console.log(`   Custo original: R$ ${ticket.custoOriginal.toFixed(2)}`);
+      console.log(`   Desconto (${ticket.descontoId}): R$ ${ticket.valorDesconto.toFixed(2)}`);
+      console.log(`   Valor devido: R$ ${ticket.valorDevido.toFixed(2)}`);
+      console.log(`   Valor pago na saída: R$ ${ticket.valorPago.toFixed(2)}`);
+
+      if (cliente instanceof Estudante) {
+        console.log(`   Saldo restante: R$ ${cliente.saldo.toFixed(2)}`);
+        if (cliente.saldo < 0) console.log('⚠️ Saldo negativo: cliente bloqueado até recarga.');
+      } else if (cliente instanceof Empresa) {
+        console.log(`   Débito acumulado para boleto: R$ ${cliente.saldoDevedor.toFixed(2)}`);
+      } else if (cliente instanceof Professor) {
+        console.log('   Permanência gratuita para professor.');
+      } else if (!cliente && pagamentoRecusado) {
+        console.log('⚠️ Pagamento recusado: placa bloqueada até regularização.');
+      }
     } catch (erro) {
       console.log(`❌ Erro ao processar saída: ${erro.message}`);
+    }
+  }
+
+  async _submenuRegularizacao() {
+    let continuar = true;
+    while (continuar) {
+      console.log('\n--- Financeiro e Regularização ---');
+      console.log('1) Recarregar saldo de estudante');
+      console.log('2) Emitir boleto para empresa');
+      console.log('3) Quitar boleto de empresa');
+      console.log('4) Desbloquear placa avulsa após pagamento');
+      console.log('0) Voltar ao menu principal');
+
+      const opcao = (await this.rl.question('Escolha uma operação: ')).trim();
+      try {
+        switch (opcao) {
+          case '0':
+            continuar = false;
+            break;
+          case '1': {
+            const documento = (await this.rl.question('Documento do estudante: ')).trim();
+            const valor = Number((await this.rl.question('Valor da recarga (R$): ')).replace(',', '.'));
+            const resultado = this.app.carregarSaldo(documento, valor);
+            console.log(`✅ Recarga registrada. Saldo atual: R$ ${resultado.saldoAtual.toFixed(2)}.`);
+            if (!resultado.bloqueado) console.log('Cliente está liberado para novas entradas.');
+            break;
+          }
+          case '2': {
+            const documento = (await this.rl.question('CNPJ da empresa: ')).trim();
+            const data = await this._lerData('Vencimento do boleto (AAAA-MM-DD): ');
+            const resultado = this.app.emitirBoleto(documento, data);
+            console.log(`✅ Boleto de R$ ${resultado.saldoDevedor.toFixed(2)} emitido com vencimento em ${resultado.dataVencimentoBoleto}.`);
+            break;
+          }
+          case '3': {
+            const documento = (await this.rl.question('CNPJ da empresa: ')).trim();
+            const resultado = this.app.quitarBoleto(documento);
+            console.log(`✅ Boleto de R$ ${resultado.valorQuitado.toFixed(2)} quitado. Empresa liberada.`);
+            break;
+          }
+          case '4': {
+            const placa = (await this.rl.question('Placa avulsa bloqueada: ')).trim();
+            this.app.desbloquearPlaca(placa);
+            console.log(`✅ Placa ${placa.toUpperCase()} desbloqueada.`);
+            break;
+          }
+          default:
+            console.log('Opção inválida.');
+        }
+      } catch (erro) {
+        console.log(`❌ Não foi possível concluir a operação: ${erro.message}`);
+      }
     }
   }
 
