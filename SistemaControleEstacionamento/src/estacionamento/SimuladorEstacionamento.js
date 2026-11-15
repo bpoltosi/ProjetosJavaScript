@@ -205,10 +205,10 @@ class SimuladorEstacionamento {
   }
 
   definirVelocidade(velocidade) {
-    if (this.estado === 'parado') throw new Error('inicie a simulação antes de alterar sua velocidade');
     if (!VELOCIDADES_VALIDAS.includes(velocidade)) {
       throw new Error('velocidade deve ser 1, 2 ou 5');
     }
+    if (this.estado === 'parado') throw new Error('inicie a simulação antes de alterar sua velocidade');
     this.velocidade = velocidade;
     if (this.opcoes) this.opcoes.velocidade = velocidade;
     this._registrarEvento(
