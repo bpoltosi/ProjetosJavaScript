@@ -6,6 +6,8 @@ const ConfiguracaoJson = require('./src/persistencia/ConfiguracaoJson');
 const Estudante = require('./src/clientes/Estudante');
 const Professor = require('./src/clientes/Professor');
 const Empresa = require('./src/clientes/Empresa');
+const ConfiguracaoEstacionamento = require('./src/configuracao/ConfiguracaoEstacionamento');
+const GerenciadorVagas = require('./src/estacionamento/GerenciadorVagas');
 
 function criarCaminhos(diretorioDados) {
   return {
@@ -117,6 +119,34 @@ function criarServidor(opcoes = {}) {
     });
   });
 
+  httpApp.put('/api/configuracao', (req, res) => {
+    exigirCampo(
+      estacionamento.registroDeEntradasESaidas.ticketsAbertos.size === 0,
+      'não é possível alterar a configuração enquanto houver veículos estacionados',
+      409
+    );
+    exigirCampo(
+      !estacionamento.gerenciadorVagas ||
+        estacionamento.gerenciadorVagas.listarVagas({ status: 'bloqueada' }).length === 0,
+      'desbloqueie todas as vagas antes de alterar a configuração',
+      409
+    );
+
+    const novaConfiguracao = new ConfiguracaoEstacionamento(req.body);
+    // Persiste antes de trocar a configuração em memória: falha de disco
+    // mantém o estado anterior ativo.
+    const persistida = ConfiguracaoJson.salvar(caminhoConfiguracao, novaConfiguracao);
+    const novoGerenciador = new GerenciadorVagas(persistida);
+    estacionamento.configuracao = persistida;
+    estacionamento.gerenciadorVagas = novoGerenciador;
+    estacionamento.registroDeEntradasESaidas.gerenciadorVagas = novoGerenciador;
+
+    res.status(200).json({
+      mensagem: 'Configuração do estacionamento salva.',
+      configuracao: persistida.toJSON(),
+    });
+  });
+
   httpApp.get('/api/estado', (req, res) => {
     const resumoVagas = estacionamento.resumoVagas();
     const ticketsAbertos = estacionamento.registroDeEntradasESaidas.ticketsAbertos;
@@ -222,6 +252,10 @@ function criarServidor(opcoes = {}) {
 
     const { placa, tipo, cor, comprimentoMetros, larguraMetros, possuiCredencialAcessibilidade } = req.body ?? {};
     exigirCampo(typeof placa === 'string' && placa.trim() !== '', 'placa deve ser informada');
+    exigirCampo(
+      possuiCredencialAcessibilidade === undefined || typeof possuiCredencialAcessibilidade === 'boolean',
+      'possuiCredencialAcessibilidade deve ser booleano'
+    );
     estacionamento.registrarPlaca(cliente.documento, placa, {
       ...(tipo === undefined ? {} : { tipo }),
       ...(cor === undefined ? {} : { cor }),
