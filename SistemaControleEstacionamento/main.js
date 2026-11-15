@@ -1,6 +1,7 @@
 const path = require('path');
 const App = require('./src/App');
 const InterfaceUsuario = require('./src/interface/InterfaceUsuario');
+const ConfiguracaoJson = require('./src/persistencia/ConfiguracaoJson');
 
 /*
     Ponto de entrada da Fase 2.
@@ -31,7 +32,16 @@ const caminhos = {
   veiculos: path.join(DIR_DADOS, 'veiculos.json'),
 };
 
-const app = new App();
+const CAMINHO_CONFIGURACAO = path.join(__dirname, 'config', 'estacionamento.json');
+let configuracao = null;
+try {
+  configuracao = ConfiguracaoJson.carregar(CAMINHO_CONFIGURACAO);
+} catch (erro) {
+  console.error(`❌ Erro ao carregar configuração: ${erro.message}`);
+  process.exit(1);
+}
+
+const app = new App(configuracao);
 
 try {
   app.carregarTudo(caminhos);
