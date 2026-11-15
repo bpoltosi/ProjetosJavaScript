@@ -32,7 +32,7 @@ class Empresa extends Cliente {
    * @param {string} nome
    */
   constructor(documento, nome) {
-    super(documento, nome);
+    super(documento, nome, { categoriaId: 'empresa' });
     /** @type {number} */
     this.saldoDevedor = 0;
     /** @type {boolean} */
@@ -46,8 +46,8 @@ class Empresa extends Cliente {
    * @param {string} placa
    * @returns {string}
    */
-  adicionarPlaca(placa) {
-    const veiculo = new Veiculo(placa);
+  adicionarPlaca(placa, caracteristicas) {
+    const veiculo = new Veiculo(placa, caracteristicas);
     this.placas.set(veiculo.placa, veiculo);
     return veiculo.placa;
   }
