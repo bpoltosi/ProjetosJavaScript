@@ -237,6 +237,8 @@ class RegistroDeEntradas_E_Saidas {
       } else if (clienteCadastrado instanceof Empresa) {
         politicaCobranca = 'debito-para-boleto';
         debitoEmpresaProjetado = clienteCadastrado.saldoDevedor + custoOriginal;
+        // Empresa acumula um débito para boleto; nenhum valor é pago na cancela.
+        valorPago = 0;
       } else if (clienteCadastrado instanceof Professor) {
         politicaCobranca = 'gratuito';
       } else {
