@@ -14,7 +14,7 @@ class Professor extends Cliente {
   */
 
   constructor(documento, nome) {
-    super(documento, nome);
+    super(documento, nome, { categoriaId: 'professor' });
     /** @type {string|null} */
     this.placaAtualEstacionada = null;
   }
@@ -24,11 +24,11 @@ class Professor extends Cliente {
    * @param {string} placa
   */
 
-  adicionarPlaca(placa) {
+  adicionarPlaca(placa, caracteristicas) {
     if (this.placas.size >= 2) {
       throw new Error('professor já possui o limite de 2 placas cadastradas');
     }
-    const veiculo = new Veiculo(placa);
+    const veiculo = new Veiculo(placa, caracteristicas);
     this.placas.set(veiculo.placa, veiculo);
     return veiculo.placa;
   }
