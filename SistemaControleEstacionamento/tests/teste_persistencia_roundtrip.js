@@ -1,13 +1,14 @@
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const CadastroClientes = require('../src/clientes/CadastroClientes');
 const RegistroDeEntradas_E_Saidas = require('../src/estacionamento/RegistroDeEntradas_E_Saidas');
 const ClientesCsv = require('../src/persistencia/ClientesCsv');
 const TicketsCsv = require('../src/persistencia/TicketsCsv');
 const BloqueiosCsv = require('../src/persistencia/BloqueiosCsv');
 
-const DIR = '/tmp/persistencia_teste';
-fs.mkdirSync(DIR, { recursive: true });
+const DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'persistencia-roundtrip-'));
+process.on('exit', () => fs.rmSync(DIR, { recursive: true, force: true }));
 const caminhoClientes = path.join(DIR, 'clientes.csv');
 const caminhoTickets = path.join(DIR, 'tickets.csv');
 const caminhoBloqueios = path.join(DIR, 'bloqueios.csv');
