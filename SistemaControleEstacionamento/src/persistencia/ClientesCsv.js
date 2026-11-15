@@ -39,7 +39,7 @@ function carregar(caminho, cadastroClientes) {
   const linhas = lerLinhas(caminho);
 
   for (const linha of linhas) {
-    const [documento, nome, campoEspecifico, tipo, placasStr, dataVencimentoStr] = linha;
+    const [documento, nome, campoEspecifico, tipo, placasStr, dataVencimentoStr, credencialAcessibilidadeStr] = linha;
     const placas = (placasStr ?? '')
       .split(';')
       .map((placa) => placa.trim())
@@ -88,6 +88,16 @@ function carregar(caminho, cadastroClientes) {
         );
     }
 
+    if (
+      credencialAcessibilidadeStr != null &&
+      credencialAcessibilidadeStr !== '' &&
+      credencialAcessibilidadeStr !== 'true' &&
+      credencialAcessibilidadeStr !== 'false'
+    ) {
+      throw new Error(`credencial de acessibilidade inválida no cadastro do documento ${documento}`);
+    }
+    cliente.definirCredencialAcessibilidade(credencialAcessibilidadeStr === 'true');
+
     for (const placa of placas) {
       cadastroClientes.registrarPlaca(documento, placa);
     }
@@ -126,7 +136,7 @@ function salvar(caminho, cadastroClientes) {
     }
 
     const placasStr = Array.from(cliente.placas.keys()).join(';');
-    return [cliente.documento, cliente.nome, campoEspecifico, tipo, placasStr, dataVencimentoStr];
+    return [cliente.documento, cliente.nome, campoEspecifico, tipo, placasStr, dataVencimentoStr, String(cliente.possuiCredencialAcessibilidade === true)];
   });
 
   escreverLinhas(caminho, linhas);
