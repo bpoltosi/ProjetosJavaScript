@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const os = require('os');
 const App = require('../src/App');
 const Estudante = require('../src/clientes/Estudante');
 const Professor = require('../src/clientes/Professor');
