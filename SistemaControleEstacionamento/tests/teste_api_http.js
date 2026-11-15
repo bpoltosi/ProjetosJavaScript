@@ -181,6 +181,22 @@ async function executar() {
     assert.equal(rotaAusente.resposta.status, 404);
     console.log('✅ Erros de validação, recursos ausentes e rotas desconhecidas usam respostas HTTP padronizadas.');
 
+    const geracao = await requisitar(baseUrl, '/api/clientes/gerar', {
+      method: 'POST',
+      body: JSON.stringify({
+        quantidade: 2,
+        categoriaId: 'estudante',
+        tipoVeiculo: 'motocicleta',
+        coresVeiculo: ['#D94B4B'],
+      }),
+    });
+    assert.equal(geracao.resposta.status, 201);
+    assert.equal(geracao.dados.criados, 2);
+    assert.ok(geracao.dados.clientes.every((cliente) => cliente.veiculos[0].tipo === 'motocicleta'));
+    assert.equal(instancia.estacionamento.registroDeEntradasESaidas.ticketsAbertos.size, 0);
+    assert.equal((await requisitar(baseUrl, '/api/eventos?tipo=CLIENTE_GERADO&origem=api')).dados.total, 2);
+    console.log('✅ Endpoint HTTP gera lote de clientes/veículos sem registrar entrada automática.');
+
     instancia.estacionamento.salvarTudo(caminhos);
     const appRestaurado = criarServidor({
       diretorioDados: diretorio,
