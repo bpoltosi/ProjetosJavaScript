@@ -60,10 +60,18 @@ async function executar() {
   const diretorioDados = fs.mkdtempSync(path.join(os.tmpdir(), 'estacionamento-e2e-completo-'));
   const caminhoConfiguracao = path.join(diretorioDados, 'config', 'estacionamento.json');
   const caminhos = criarCaminhos(diretorioDados);
-  const caminhoTicketsDemo = path.join(__dirname, '..', 'data', 'tickets.csv');
+  const diretorioDemo = path.join(__dirname, '..', 'data');
+  const caminhoTicketsDemo = path.join(diretorioDemo, 'tickets.csv');
   const ticketsDemoAntes = fs.existsSync(caminhoTicketsDemo)
     ? fs.readFileSync(caminhoTicketsDemo, 'utf8')
     : null;
+  const snapshotDadosDemo = () => {
+    if (!fs.existsSync(diretorioDemo)) return null;
+    return Object.fromEntries(fs.readdirSync(diretorioDemo, { withFileTypes: true })
+      .filter((item) => item.isFile())
+      .map((item) => [item.name, fs.readFileSync(path.join(diretorioDemo, item.name))]));
+  };
+  const dadosDemoAntes = snapshotDadosDemo();
 
   let primeiroServidor;
   let segundoServidor;
@@ -215,7 +223,17 @@ async function executar() {
     const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
     assert.equal(packageJson.scripts.start, 'node main.js');
     assert.equal(packageJson.scripts.web, 'node server.js');
-    console.log('✅ Teste isolado não altera os tickets de demonstração e preserva os comandos CLI/web.');
+    const mainSource = fs.readFileSync(path.join(__dirname, '..', 'main.js'), 'utf8');
+    const serverSource = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+    assert.ok(mainSource.includes('process.env.ESTACIONAMENTO_DIR_DADOS'));
+    assert.ok(mainSource.includes('process.env.ESTACIONAMENTO_CONFIG'));
+    for (const arquivo of ['clientes.csv', 'tickets.csv', 'bloqueios.csv', 'veiculos.json', 'estado-vagas.json', 'eventos.jsonl']) {
+      assert.ok(mainSource.includes(\`'\${arquivo}'\`), `CLI deve usar ${arquivo}`);
+      assert.ok(serverSource.includes(\`'\${arquivo}'\`), `servidor web deve usar ${arquivo}`);
+    }
+    assert.deepEqual(snapshotDadosDemo(), dadosDemoAntes, 'nenhum arquivo de demonstração pode ser alterado pelo teste');
+    assert.equal(ticketsDemoAntes === null || fs.readFileSync(caminhoTicketsDemo, 'utf8') === ticketsDemoAntes, true);
+    console.log('✅ CLI e web usam a mesma convenção de arquivos, e os dados de demonstração permanecem intactos.');
   } finally {
     if (primeiroServidor) await new Promise((resolve) => primeiroServidor.close(resolve));
     if (segundoServidor) await new Promise((resolve) => segundoServidor.close(resolve));
