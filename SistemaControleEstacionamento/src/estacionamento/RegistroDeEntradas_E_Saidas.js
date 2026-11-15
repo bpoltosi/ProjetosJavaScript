@@ -40,6 +40,7 @@ class RegistroDeEntradas_E_Saidas {
       categoriaCliente: cliente?.categoriaId ?? null,
       vagaId: vaga?.id ?? null,
       origem,
+      timestamp: dados.timestamp ?? null,
       ...dados,
     };
   }
@@ -118,7 +119,11 @@ class RegistroDeEntradas_E_Saidas {
       const vaga = this.gerenciadorVagas
         ? this.gerenciadorVagas.alocar(placa, clienteParaAlocacao, veiculo)
         : null;
-      const ticket = new TicketEstacionamento(placa, new Date(), vaga?.id ?? null);
+      const dataHoraEntrada = opcoes.dataHoraEntrada instanceof Date
+        ? new Date(opcoes.dataHoraEntrada.getTime())
+        : new Date();
+      if (Number.isNaN(dataHoraEntrada.getTime())) throw new Error('dataHoraEntrada inválida');
+      const ticket = new TicketEstacionamento(placa, dataHoraEntrada, vaga?.id ?? null);
 
       try {
         const dadosEvento = this._contextoEvento(
@@ -127,7 +132,7 @@ class RegistroDeEntradas_E_Saidas {
           veiculo,
           vaga,
           origem,
-          { resultado: 'autorizado' }
+          { resultado: 'autorizado', timestamp: opcoes.timestamp ?? dataHoraEntrada }
         );
         const eventos = [{
           ...dadosEvento,
@@ -199,7 +204,10 @@ class RegistroDeEntradas_E_Saidas {
       throw erro;
     }
 
-    const dataHoraSaida = new Date();
+    const dataHoraSaida = opcoes.dataHoraSaida instanceof Date
+      ? new Date(opcoes.dataHoraSaida.getTime())
+      : new Date();
+    if (Number.isNaN(dataHoraSaida.getTime())) throw new Error('dataHoraSaida inválida');
     if (opcoes.pagamentoRecusado === true && clienteCadastrado) {
       const erro = new Error('recusa de pagamento não se aplica a clientes cadastrados; a cobrança é feita por saldo, boleto ou gratuidade');
       this._registrarNegacao({
@@ -282,6 +290,7 @@ class RegistroDeEntradas_E_Saidas {
       {
         vagaId,
         resultado,
+        timestamp: opcoes.timestamp ?? dataHoraSaida,
         detalhes: pagamentoRecusado
           ? `Saída registrada com pagamento recusado. Valor devido: ${custoOriginal - valorDesconto}.`
           : `Saída processada. Valor pago: ${valorPago}.`,
