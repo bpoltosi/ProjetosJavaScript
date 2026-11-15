@@ -39,6 +39,7 @@ async function executar() {
     assert.match(html, /\/assets\/pixel-assets\.js/);
     assert.match(html, /\/styles\.css/);
     assert.match(html, /\/app\.js/);
+    assert.ok(html.indexOf('/assets/pixel-assets.js') < html.indexOf('/app.js'), 'assets devem ser carregados antes do renderizador');
     console.log('✅ Página principal entrega assistente de configuração e controles operacionais do painel.');
 
     const cssResposta = await fetch(`${baseUrl}/styles.css`);
@@ -89,6 +90,9 @@ async function executar() {
     assert.match(javascript, /mapPageSize: 80/);
     assert.match(javascript, /ParkingPixelAssets/);
     assert.doesNotMatch(javascript, /react-dom|createRoot\(|new Phaser\./i);
+    const idsHtml = new Set(Array.from(html.matchAll(/\\bid="([^"]+)"/g), (match) => match[1]));
+    const idsConsultados = Array.from(javascript.matchAll(/\\$\\('#([^']+)'\\)/g), (match) => match[1]);
+    idsConsultados.forEach((id) => assert.ok(idsHtml.has(id), `o painel consulta #${id}, que deve existir no HTML`));
     const assetsResposta = await fetch(`${baseUrl}/assets/pixel-assets.js`);
     assert.equal(assetsResposta.status, 200);
     assert.match(assetsResposta.headers.get('content-type'), /javascript/);
