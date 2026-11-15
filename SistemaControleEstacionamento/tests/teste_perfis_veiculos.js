@@ -71,6 +71,7 @@ function executar() {
     const app1 = new App();
     const estudante = new Estudante('11111111111', 'Ana Estudante');
     app1.cadastrarCliente(estudante);
+    estudante.definirCredencialAcessibilidade(true);
     app1.registrarPlaca(estudante.documento, 'MOT1A23', {
       tipo: 'motocicleta',
       cor: '#D94B4B',
@@ -88,7 +89,8 @@ function executar() {
     assert.equal(veiculoRestaurado.comprimentoMetros, 2.2);
     assert.equal(veiculoRestaurado.larguraMetros, 0.95);
     assert.equal(clienteRestaurado.categoriaId, 'estudante');
-    console.log('✅ Metadados de veículos são persistidos e restaurados sem alterar o CSV legado de clientes.');
+    assert.equal(clienteRestaurado.possuiCredencialAcessibilidade, true);
+    console.log('✅ Metadados de veículos e credencial de acessibilidade são persistidos/restaurados com retrocompatibilidade dos CSVs.');
   } finally {
     fs.rmSync(diretorio, { recursive: true, force: true });
   }
