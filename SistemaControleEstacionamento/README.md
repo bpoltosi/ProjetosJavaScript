@@ -1,6 +1,18 @@
 Sistema de Controle de Estacionamento — Programação Orientada a Objetos - JavaScript - PUCRS2026/3
 
-Projeto prático de desenvolvimento de um sistema de controle de entrada/saída/permanência de um estacionamento, com todas suas regras de negocio e especificações.
+Projeto prático de desenvolvimento de um sistema de controle de entrada/saída/permanência de um estacionamento, com regras de negócio no backend, CLI e painel web.
+
+## Requisitos e instalação
+
+- Node.js 20 LTS recomendado (a suíte de CI é executada em Node.js 20).
+- npm instalado.
+- Não é necessário banco de dados externo: a persistência local usa CSV, JSON e JSONL.
+
+Na pasta `SistemaControleEstacionamento/`, instale as dependências uma vez:
+
+```bash
+npm install
+```
 
 ## Como rodar (Fase 2)
 
@@ -41,28 +53,50 @@ interativo:
 - **Sair**: salva automaticamente antes de encerrar. O mesmo salvamento
   automático dispara em `Ctrl+C`/`SIGTERM`.
 
-### Arquivos de dados (`data/`)
+### Arquivos de dados e configuração
 
-| Arquivo | Formato por linha |
+A CLI e o servidor web usam o mesmo diretório de dados por padrão: `data/`.
+O arquivo de configuração fica em `config/estacionamento.json`.
+
+| Caminho | Conteúdo / persistência |
 |---|---|
-| `clientes.csv` | `documento,nome,campoEspecifico,tipo,placa1;placa2;...,dataVencimentoBoleto` (campoEspecifico = saldo do Estudante, saldoDevedor da Empresa, ou vazio para Professor; dataVencimentoBoleto só é relevante para Empresa — ISO 8601 ou vazio; coluna adicionada ao final para manter retrocompatibilidade com CSVs sem ela) |
-| `tickets.csv` | `placa,dataHoraEntrada,dataHoraSaida,custoOriginal,descontoId,valorDesconto,valorDevido,valorPago` (ticket ainda aberto: só placa e dataHoraEntrada preenchidos) |
-| `bloqueios.csv` | uma placa avulsa bloqueada por linha (regenerado por completo a cada salvamento) |
+| `config/estacionamento.json` | capacidade, nome, categorias de vagas, critérios de elegibilidade, tipos permitidos e perfis de clientes |
+| `data/clientes.csv` | `documento,nome,campoEspecifico,tipo,placas,dataVencimentoBoleto,credencialAcessibilidade`; o campo específico armazena saldo de Estudante, débito de Empresa ou vazio; boleto e credencial são compatíveis com arquivos antigos sem as colunas finais |
+| `data/tickets.csv` | tickets abertos e fechados: placa, entrada/saída, valores de cobrança/desconto e ID da vaga; tickets abertos não possuem campos de saída |
+| `data/bloqueios.csv` | uma placa avulsa bloqueada por linha |
+| `data/veiculos.json` | metadados de veículos (tipo, cor e dimensões), vinculados às placas cadastradas |
+| `data/estado-vagas.json` | versão do formato e IDs das vagas bloqueadas; ocupação é reconstruída a partir dos tickets abertos e seus IDs de vaga |
+| `data/eventos.jsonl` | histórico append-only: um objeto JSON por linha, com timestamp, tipo, placa, vaga, resultado, motivo e origem |
 
-Na primeira execução, se algum desses arquivos não existir, o sistema
-simplesmente começa com aquela estrutura vazia (não é tratado como erro).
+Na primeira execução, a ausência da configuração direciona o painel web ao assistente inicial.
+Arquivos de dados ausentes representam um estado vazio. Os dados só são criados/salvos nos
+caminhos configurados; os testes usam diretórios temporários próprios.
 
-### Testes
+### Testes automatizados
 
+Execute toda a suíte isolada com um único comando:
+
+```bash
+npm test
 ```
-node tests/demo-fase1-legacy.js          # regressão do núcleo da Fase 1
-node tests/teste_clientes_csv.js         # leitura/escrita de clientes.csv
-node tests/teste_persistencia_roundtrip.js  # round-trip completo (clientes+tickets+bloqueios)
-node tests/teste_app_persistencia.js     # carregarTudo/salvarTudo via App
-node tests/teste_relatorios.js           # os 6 relatórios gerenciais, com valores esperados
-node tests/teste_interface_manual.js     # fluxo completo da interface interativa, ponta a ponta
-node tests/teste_correcao_fase1.js       # normalização de placa (Veiculo) + inadimplência automática da Empresa
-node tests/teste_persistencia_boleto.js  # round-trip do vencimento do boleto da Empresa (item B.6)
+
+O runner encontra automaticamente todos os arquivos `tests/teste_*.js`, executa cada um em um processo Node separado, aplica timeout por teste e apresenta o total aprovado/falhado. A suíte cobre:
+
+- configuração e validação de categorias, tipos e dimensões;
+- clientes, perfis, veículos, regras financeiras e relatórios;
+- persistência CSV/JSON/JSONL e reconstrução de ocupação/bloqueios;
+- eventos, API HTTP, gerador, simulador e operações de exceção;
+- entrega do painel web, assets pixel art, sintaxe do frontend e mapa Canvas;
+- fluxo manual da CLI e cenário completo por HTTP com reinicialização do servidor.
+
+O teste integrado `teste_integracao_completa.js` cria um diretório temporário próprio, executa a jornada completa e o remove no encerramento. Os testes legados que gravam arquivos também usam diretórios temporários exclusivos. Nenhum teste automatizado deve escrever em `data/` ou sobrescrever a configuração/dados de demonstração.
+
+Para executar apenas um teste:
+
+```bash
+node tests/teste_integracao_completa.js
+node tests/teste_simulador_estacionamento.js
+node tests/teste_painel_web.js
 ```
 
 ## Correção pós-avaliação da Fase 1
@@ -165,3 +199,37 @@ Arquivos principais:
 - `public/app.js`: sincronização HTTP, paginação, seleção e renderização do mapa.
 - `public/assets/pixel-assets.js`: sprites, cores e padrões de pixel art.
 - `public/styles.css`: moldura responsiva e tratamento pixelated do Canvas.
+
+
+## Integração CLI e web
+
+A CLI (`npm start`) e o servidor web (`npm run web`) usam por padrão o mesmo diretório
+`data/` e os mesmos nomes de arquivo: `clientes.csv`, `tickets.csv`, `bloqueios.csv`,
+`veiculos.json`, `estado-vagas.json` e `eventos.jsonl`. A configuração fica por padrão
+em `config/estacionamento.json`.
+
+Para apontar os modos para um local de dados/configuração alternativo, defina as variáveis
+antes de iniciar o processo:
+
+```bash
+# Linux/macOS
+export ESTACIONAMENTO_DIR_DADOS="$HOME/estacionamento-data"
+export ESTACIONAMENTO_CONFIG="$HOME/estacionamento-config/estacionamento.json"
+
+# Windows PowerShell
+$env:ESTACIONAMENTO_DIR_DADOS = "$HOME/estacionamento-data"
+$env:ESTACIONAMENTO_CONFIG = "$HOME/estacionamento-config/estacionamento.json"
+```
+
+**Execute apenas uma instância (CLI ou web) por diretório de dados por vez.** Ambos os modos
+carregam os dados para a memória e salvam ao encerrar; executar dois processos apontando para
+a mesma pasta ao mesmo tempo pode provocar sobrescrita por estado desatualizado. Encerre um
+modo antes de iniciar o outro. A CLI e o servidor usam agora a mesma variável de configuração
+`ESTACIONAMENTO_CONFIG` e a mesma variável `ESTACIONAMENTO_DIR_DADOS`.
+
+## Demonstração do projeto
+
+O roteiro de captura e vídeo está em [`docs/roteiro-demonstracao.md`](docs/roteiro-demonstracao.md).
+Ele descreve a sequência de 60–90 segundos, as telas reais a capturar e a preparação de uma
+instalação limpa. Não há screenshots fictícios incluídos no repositório: salve as capturas feitas
+no navegador em `docs/screenshots/` depois de executar a aplicação.

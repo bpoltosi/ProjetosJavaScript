@@ -34,7 +34,7 @@ const caminhos = {
   eventos: path.join(DIR_DADOS, 'eventos.jsonl'),
 };
 
-const CAMINHO_CONFIGURACAO = path.join(__dirname, 'config', 'estacionamento.json');
+const CAMINHO_CONFIGURACAO = process.env.ESTACIONAMENTO_CONFIG || path.join(__dirname, 'config', 'estacionamento.json');
 let configuracao = null;
 try {
   configuracao = ConfiguracaoJson.carregar(CAMINHO_CONFIGURACAO);
@@ -61,15 +61,19 @@ function salvarAoEncerrar() {
 // (Ctrl+C ou kill). O caminho normal (usuário escolhe "Sair" no menu) já
 // chama salvarAoEncerrar por conta própria dentro de InterfaceUsuario.iniciar().
 let salvandoPorSinal = false;
-function tratarSinalDeEncerramento() {
+async function tratarSinalDeEncerramento() {
   if (salvandoPorSinal) return;
   salvandoPorSinal = true;
-  console.log('\nEncerrando... salvando dados antes de sair.');
+  console.log('\nEncerrando... parando simulador e salvando dados antes de sair.');
   try {
+    await app.encerrarSimulacao();
     salvarAoEncerrar();
     console.log('Dados salvos com sucesso.');
+  } catch (erro) {
+    console.error(`Falha no encerramento gracioso: ${erro.message}`);
+    process.exitCode = 1;
   } finally {
-    process.exit(0);
+    process.exit(process.exitCode || 0);
   }
 }
 

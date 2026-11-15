@@ -1,11 +1,12 @@
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const App = require('../src/App');
 const Estudante = require('../src/clientes/Estudante');
 const Professor = require('../src/clientes/Professor');
 
-const DIR = '/tmp/app_persistencia_teste';
-fs.mkdirSync(DIR, { recursive: true });
+const DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'app-persistencia-'));
+process.on('exit', () => fs.rmSync(DIR, { recursive: true, force: true }));
 const caminhos = {
   clientes: path.join(DIR, 'clientes.csv'),
   tickets: path.join(DIR, 'tickets.csv'),

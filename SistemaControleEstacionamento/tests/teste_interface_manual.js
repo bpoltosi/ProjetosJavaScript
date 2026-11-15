@@ -22,7 +22,8 @@ const { spawn } = require('child_process');
 */
 
 const DIR_PROJETO = path.join(__dirname, '..');
-const DIR_TEMP = '/tmp/teste_interface_manual';
+const DIR_TEMP = fs.mkdtempSync(path.join(require('os').tmpdir(), 'teste-interface-manual-'));
+process.on('exit', () => fs.rmSync(DIR_TEMP, { recursive: true, force: true }));
 
 function prepararDadosIsolados() {
   fs.rmSync(DIR_TEMP, { recursive: true, force: true });

@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const CadastroClientes = require('../src/clientes/CadastroClientes');
 const ClientesCsv = require('../src/persistencia/ClientesCsv');
 const Empresa = require('../src/clientes/Empresa');
@@ -27,8 +28,8 @@ function assert(condicao, mensagem) {
   }
 }
 
-const DIR = '/tmp/persistencia_boleto_teste';
-fs.mkdirSync(DIR, { recursive: true });
+const DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'persistencia-boleto-'));
+process.on('exit', () => fs.rmSync(DIR, { recursive: true, force: true }));
 
 // --- Cenário 1 + 2: boleto vencido, saldo devedor pendente ---
 const caminho1 = path.join(DIR, 'clientes_vencido.csv');
