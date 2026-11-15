@@ -179,8 +179,8 @@ class GeradorClientes {
       throw new Error('possuiCredencialAcessibilidade deve ser booleano');
     }
 
-    const pesosCategorias = opcoes.pesosCategorias ?? {};
-    const pesosTipos = opcoes.pesosTipos ?? {};
+    const pesosCategorias = opcoes.categoriaId ? {} : (opcoes.pesosCategorias ?? {});
+    const pesosTipos = opcoes.tipoVeiculo ? {} : (opcoes.pesosTipos ?? {});
     if (!pesosCategorias || typeof pesosCategorias !== 'object' || Array.isArray(pesosCategorias)) {
       throw new Error('pesosCategorias deve ser um objeto');
     }
@@ -218,6 +218,7 @@ class GeradorClientes {
           detalhes: `Cliente ${nome} gerado automaticamente.`,
         }];
 
+        const tiposGeradosNesteCliente = [];
         for (let indiceVeiculo = 0; indiceVeiculo < veiculosPorCliente; indiceVeiculo += 1) {
           const tipo = this._escolherPonderado(tiposVeiculo, pesosTipos, 'tipo de veículo');
           const cor = cores[Math.floor(this.random() * cores.length)];
@@ -236,7 +237,7 @@ class GeradorClientes {
             origem,
             detalhes: `Veículo ${placa} gerado para ${nome}.`,
           });
-          distribuicaoTipos[tipo] = (distribuicaoTipos[tipo] ?? 0) + 1;
+          tiposGeradosNesteCliente.push(tipo);
         }
 
         // O lote de eventos só é gravado depois de criar o cliente e todos os
@@ -256,6 +257,9 @@ class GeradorClientes {
           veiculos,
         });
         distribuicaoCategorias[perfil.id] = (distribuicaoCategorias[perfil.id] ?? 0) + 1;
+        for (const tipoGerado of tiposGeradosNesteCliente) {
+          distribuicaoTipos[tipoGerado] = (distribuicaoTipos[tipoGerado] ?? 0) + 1;
+        }
       } catch (erro) {
         if (cliente && this.app.buscarClientePorDocumento(documento)) {
           this.app.cadastroClientes.removerCliente(documento);
