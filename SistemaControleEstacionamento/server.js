@@ -288,6 +288,32 @@ function criarServidor(opcoes = {}) {
     res.json({ cliente: resumirCliente(cliente) });
   });
 
+  httpApp.post('/api/clientes/:documento/saldo', (req, res) => {
+    const valor = req.body?.valor;
+    exigirCampo(typeof valor === 'number' && Number.isFinite(valor) && valor > 0,
+      'valor da recarga deve ser um número positivo');
+    const resultado = estacionamento.carregarSaldo(req.params.documento, valor, { origem: 'api' });
+    res.json({ mensagem: 'Recarga registrada.', ...resultado });
+  });
+
+  httpApp.post('/api/clientes/:documento/boleto', (req, res) => {
+    const dataVencimento = new Date(req.body?.dataVencimento);
+    exigirCampo(req.body?.dataVencimento !== undefined && !Number.isNaN(dataVencimento.getTime()),
+      'dataVencimento deve ser uma data válida');
+    const resultado = estacionamento.emitirBoleto(req.params.documento, dataVencimento, { origem: 'api' });
+    res.status(201).json({ mensagem: 'Boleto emitido.', ...resultado });
+  });
+
+  httpApp.post('/api/clientes/:documento/quitar-boleto', (req, res) => {
+    const resultado = estacionamento.quitarBoleto(req.params.documento, { origem: 'api' });
+    res.json({ mensagem: 'Boleto quitado.', ...resultado });
+  });
+
+  httpApp.post('/api/placas/:placa/desbloquear', (req, res) => {
+    const resultado = estacionamento.desbloquearPlaca(req.params.placa, { origem: 'api' });
+    res.json({ mensagem: 'Placa desbloqueada.', ...resultado });
+  });
+
   httpApp.post('/api/entradas', (req, res) => {
     const placa = req.body?.placa;
     exigirCampo(typeof placa === 'string' && placa.trim() !== '', 'placa deve ser informada');
@@ -307,11 +333,42 @@ function criarServidor(opcoes = {}) {
       'pagamentoRecusado deve ser booleano'
     );
 
+    const cliente = estacionamento.buscarClientePorPlaca(placa.trim().toUpperCase());
     const ticket = estacionamento.processarSaida(placa, {
       pagamentoRecusado: req.body.pagamentoRecusado === true,
       origem: 'api',
     });
-    res.json({ mensagem: 'Saída processada.', ticket: resumirTicket(ticket) });
+
+    let cobranca;
+    if (!cliente) {
+      cobranca = {
+        politica: 'pagamento-na-saida',
+        valorDevido: ticket.valorDevido,
+        valorPago: ticket.valorPago,
+        placaBloqueada: estacionamento.registroDeEntradasESaidas.placasBloqueadas.has(placa.trim().toUpperCase()),
+      };
+    } else if (cliente instanceof Estudante) {
+      cobranca = {
+        politica: 'debito-em-saldo',
+        valorDebitado: ticket.custoOriginal,
+        saldoAtual: cliente.saldo,
+        bloqueado: cliente.saldo < 0,
+      };
+    } else if (cliente instanceof Empresa) {
+      cobranca = {
+        politica: 'debito-para-boleto',
+        valorAdicionadoAoDebito: ticket.custoOriginal,
+        saldoDevedor: cliente.saldoDevedor,
+        dataVencimentoBoleto: cliente.dataVencimentoBoleto?.toISOString() ?? null,
+        inadimplente: cliente.inadimplente,
+      };
+    } else if (cliente instanceof Professor) {
+      cobranca = { politica: 'gratuito', valorDevido: 0, valorPago: 0 };
+    } else {
+      cobranca = { politica: 'perfil-personalizado-gratuito', valorDevido: 0, valorPago: 0 };
+    }
+
+    res.json({ mensagem: 'Saída processada.', ticket: resumirTicket(ticket), cobranca });
   });
 
   httpApp.post('/api/vagas/:id/bloquear', (req, res) => {
