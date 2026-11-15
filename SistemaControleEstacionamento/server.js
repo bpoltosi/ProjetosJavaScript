@@ -77,6 +77,7 @@ function statusDoErro(erro) {
     mensagem.includes('não está') ||
     mensagem.includes('não há vaga') ||
     mensagem.includes('não é possível') ||
+    mensagem.includes('não se aplica') ||
     mensagem.includes('não autorizada')
   ) return 409;
   return 500;
