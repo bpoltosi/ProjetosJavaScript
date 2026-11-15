@@ -120,13 +120,13 @@ class RegistroDeEntradas_E_Saidas {
       const clienteParaAlocacao = clienteCadastrado ??
         (this.gerenciadorVagas ? new ClienteAvulso(placa) : null);
       veiculo = clienteParaAlocacao?.placas.get(placa) ?? null;
-      const vaga = this.gerenciadorVagas
-        ? this.gerenciadorVagas.alocar(placa, clienteParaAlocacao, veiculo)
-        : null;
       const dataHoraEntrada = opcoes.dataHoraEntrada instanceof Date
         ? new Date(opcoes.dataHoraEntrada.getTime())
         : new Date();
       if (Number.isNaN(dataHoraEntrada.getTime())) throw new Error('dataHoraEntrada inválida');
+      const vaga = this.gerenciadorVagas
+        ? this.gerenciadorVagas.alocar(placa, clienteParaAlocacao, veiculo)
+        : null;
       const ticket = new TicketEstacionamento(placa, dataHoraEntrada, vaga?.id ?? null);
 
       try {
