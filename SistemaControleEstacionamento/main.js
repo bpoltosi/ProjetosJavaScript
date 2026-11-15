@@ -28,6 +28,7 @@ const caminhos = {
   clientes: path.join(DIR_DADOS, 'clientes.csv'),
   tickets: path.join(DIR_DADOS, 'tickets.csv'),
   bloqueios: path.join(DIR_DADOS, 'bloqueios.csv'),
+  veiculos: path.join(DIR_DADOS, 'veiculos.json'),
 };
 
 const app = new App();
