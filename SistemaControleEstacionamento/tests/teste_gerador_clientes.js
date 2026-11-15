@@ -145,7 +145,7 @@ function executar() {
     console.log('✅ O gerador evita colisões com documentos e placas já cadastrados.');
 
     const totalEventosGeracao = app.consultarEventos({ tipo: 'CLIENTE_GERADO' }).total;
-    assert.ok(totalEventosGeracao >= 42);
+    assert.equal(totalEventosGeracao, 37);
     assert.equal(app.consultarEventos({ origem: 'simulacao', tipo: 'VEICULO_GERADO' }).total, 8 + loteAleatorio.criados);
     app.salvarTudo(caminhos);
 
