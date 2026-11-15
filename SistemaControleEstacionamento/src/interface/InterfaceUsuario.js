@@ -40,6 +40,7 @@ class InterfaceUsuario {
       console.log('4) Consultas e relatórios');
       console.log('5) Salvar dados agora');
       console.log('6) Sair');
+      console.log('7) Terminal operacional (histórico de eventos)');
 
       const opcao = (await this.rl.question('Escolha uma opção: ')).trim();
 
@@ -61,6 +62,9 @@ class InterfaceUsuario {
           break;
         case '6':
           continuar = false;
+          break;
+        case '7':
+          await this._submenuEventos();
           break;
         default:
           console.log('Opção inválida.');
@@ -184,6 +188,60 @@ class InterfaceUsuario {
   /**
    * @private
   */
+
+  async _submenuEventos() {
+    console.log('\n=== Terminal Operacional ===');
+    console.log('Histórico persistente de entradas, saídas, recusas e vagas.');
+    const placa = (await this.rl.question('Filtrar por placa (vazio = todas): ')).trim();
+    const tipo = (await this.rl.question('Filtrar por tipo (ex.: ENTRADA_NEGADA, vazio = todos): ')).trim();
+
+    let pagina = 1;
+    let continuar = true;
+    while (continuar) {
+      try {
+        const resultado = this.app.consultarEventos({
+          placa: placa || undefined,
+          tipo: tipo || undefined,
+          pagina,
+          limite: 30,
+        });
+
+        console.log(`\nEventos encontrados: ${resultado.total} | Página ${pagina}/${Math.max(1, resultado.totalPaginas)}`);
+        if (resultado.eventos.length === 0) {
+          console.log('Nenhum evento corresponde aos filtros.');
+        }
+
+        for (const evento of resultado.eventos) {
+          let marcador = '[INFO]';
+          if (['negado', 'recusado'].includes(evento.resultado)) marcador = '[ALERTA]';
+          else if (['autorizado', 'concluido', 'ocupada'].includes(evento.resultado)) marcador = '[OK]';
+          else if (evento.resultado === 'bloqueada') marcador = '[BLOQUEIO]';
+          else if (['livre', 'liberada'].includes(evento.resultado)) marcador = '[LIBERADA]';
+
+          const horario = new Date(evento.timestamp).toLocaleString();
+          const placaTexto = evento.placa ?? 'sem placa';
+          const vagaTexto = evento.vagaId ? ` | Vaga: ${evento.vagaId}` : '';
+          const tipoVeiculo = evento.tipoVeiculo ? ` | Veículo: ${evento.tipoVeiculo}` : '';
+          const categoria = evento.categoriaCliente ? ` | Categoria: ${evento.categoriaCliente}` : '';
+          const contexto = evento.motivo ?? evento.detalhes ?? '';
+          console.log(`${marcador} ${horario} | ${evento.tipo} | ${placaTexto}${vagaTexto}${tipoVeiculo}${categoria} | origem: ${evento.origem}`);
+          if (contexto) console.log(`        ${contexto}`);
+        }
+
+        if (pagina < resultado.totalPaginas) {
+          const acao = (await this.rl.question('\n[N] Próxima página | [0] Voltar: ')).trim().toLowerCase();
+          if (acao === 'n') pagina += 1;
+          else continuar = false;
+        } else {
+          await this.rl.question('\nPressione Enter para voltar ao menu principal...');
+          continuar = false;
+        }
+      } catch (erro) {
+        console.log(`❌ Não foi possível consultar o histórico: ${erro.message}`);
+        continuar = false;
+      }
+    }
+  }
 
   async _submenuRelatorios() {
     const relatorios = this.app.relatoriosGerenciais;
