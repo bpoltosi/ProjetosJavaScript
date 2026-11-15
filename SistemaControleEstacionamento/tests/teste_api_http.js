@@ -56,7 +56,7 @@ async function executar() {
   try {
     const pagina = await requisitar(baseUrl, '/');
     assert.equal(pagina.resposta.status, 200);
-    assert.match(pagina.dados, /SISTEMA DE CONTROLE DE ESTACIONAMENTO/);
+    assert.match(pagina.dados, /PIXEL PARK/);
     console.log('✅ Servidor entrega os arquivos estáticos da pasta public/.');
 
     const health = await requisitar(baseUrl, '/api/health');
