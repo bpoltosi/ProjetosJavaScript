@@ -246,6 +246,14 @@ function criarServidor(opcoes = {}) {
     res.status(201).json({ cliente: resumirCliente(cliente) });
   });
 
+  httpApp.post('/api/clientes/gerar', (req, res) => {
+    const resultado = estacionamento.gerarClientes({
+      ...(req.body ?? {}),
+      origem: 'api',
+    });
+    res.status(201).json(resultado);
+  });
+
   httpApp.post('/api/clientes/:documento/veiculos', (req, res) => {
     const cliente = estacionamento.buscarClientePorDocumento(req.params.documento);
     exigirCampo(cliente, 'cliente não encontrado', 404);
