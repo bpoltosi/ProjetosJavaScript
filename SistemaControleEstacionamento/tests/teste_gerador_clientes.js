@@ -126,17 +126,21 @@ function executar() {
     assert.throws(() => app.gerarClientes({ quantidade: 1, probabilidadeAcessibilidade: 1.5 }), /entre 0 e 1/);
     console.log('✅ Parâmetros fora do contrato são rejeitados antes da geração.');
 
+    const appColisao = new App(configuracao);
+    appColisao.geradorClientes.random = randomComSemente(7);
     const clienteExistente = new Estudante('00000000001', 'Cliente Existente', 25);
-    app.cadastrarCliente(clienteExistente);
-    app.registrarPlaca(clienteExistente.documento, 'SIM0A00');
-    const loteSemColisao = app.gerarClientes({
+    appColisao.cadastrarCliente(clienteExistente);
+    appColisao.registrarPlaca(clienteExistente.documento, 'SIM0A00');
+    const loteSemColisao = appColisao.gerarClientes({
       quantidade: 5,
       categoriaId: 'estudante',
       tipoVeiculo: 'motocicleta',
     });
     assert.equal(loteSemColisao.criados, 5);
-    const todasPlacas = app.listarClientes().flatMap((cliente) => Array.from(cliente.placas.keys()));
+    assert.ok(loteSemColisao.clientes.every((cliente) => cliente.documento !== '00000000001'));
+    const todasPlacas = appColisao.listarClientes().flatMap((cliente) => Array.from(cliente.placas.keys()));
     assert.equal(new Set(todasPlacas).size, todasPlacas.length);
+    assert.ok(!todasPlacas.some((placa) => loteSemColisao.clientes.some((cliente) => cliente.veiculos.some((veiculo) => veiculo.placa === 'SIM0A00'))));
     console.log('✅ O gerador evita colisões com documentos e placas já cadastrados.');
 
     const totalEventosGeracao = app.consultarEventos({ tipo: 'CLIENTE_GERADO' }).total;
