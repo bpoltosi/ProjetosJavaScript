@@ -132,13 +132,13 @@ class SimuladorEstacionamento {
     let resultado;
     try {
       resultado = this.app.gerarClientes({
-      quantidade: faltantes,
-      ...(this.opcoes.categoriaId ? { categoriaId: this.opcoes.categoriaId } : {}),
-      ...(this.opcoes.pesosCategorias ? { pesosCategorias: this.opcoes.pesosCategorias } : {}),
-      tiposVeiculo: this.opcoes.tiposVeiculo,
-      pesosTipos: this.opcoes.pesosTipos,
-      coresVeiculo: this.opcoes.coresVeiculo,
-      probabilidadeAcessibilidade: this.opcoes.probabilidadeAcessibilidade,
+        quantidade: faltantes,
+        ...(this.opcoes.categoriaId ? { categoriaId: this.opcoes.categoriaId } : {}),
+        ...(this.opcoes.pesosCategorias ? { pesosCategorias: this.opcoes.pesosCategorias } : {}),
+        tiposVeiculo: this.opcoes.tiposVeiculo,
+        pesosTipos: this.opcoes.pesosTipos,
+        coresVeiculo: this.opcoes.coresVeiculo,
+        probabilidadeAcessibilidade: this.opcoes.probabilidadeAcessibilidade,
         origem: 'simulacao',
       });
     } finally {
@@ -182,8 +182,7 @@ class SimuladorEstacionamento {
     this._registrarEvento(
       'SIMULACAO_INICIADA',
       'executando',
-      `Simulação iniciada a ${this.velocidade}x com ${this.frota.length} veículo(s) na frota.`,
-      { detalhes: `Intervalo entre chegadas: ${this.intervaloChegadaMs} ms; permanência: ${this.permanenciaMinMs}–${this.permanenciaMaxMs} ms.` }
+      `Simulação iniciada a ${this.velocidade}x com ${this.frota.length} veículo(s) na frota. Intervalo entre chegadas: ${this.intervaloChegadaMs} ms; permanência: ${this.permanenciaMinMs}–${this.permanenciaMaxMs} ms.`
     );
     this._agendarProximoCiclo();
     return this.obterEstado();
