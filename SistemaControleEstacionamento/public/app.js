@@ -385,6 +385,7 @@
     definirTexto('simulationStateText', estado.toUpperCase());
     definirTexto('simulationSpeedLabel', `${simulacao.velocidade || 1}×`);
     $('#simulationSpeed').value = String(simulacao.velocidade || 1);
+    $('#simulationSpeed').disabled = estado === 'parado';
     const estatisticas = simulacao.estatisticas || {};
     definirTexto('simEntryCount', String(estatisticas.entradasAutorizadas || 0));
     definirTexto('simDeniedCount', String(estatisticas.entradasNegadas || 0));
