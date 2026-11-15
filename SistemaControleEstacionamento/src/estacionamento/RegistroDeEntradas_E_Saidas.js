@@ -12,8 +12,9 @@ class RegistroDeEntradas_E_Saidas {
    * @param {import('../clientes/CadastroClientes')} cadastroClientes
   */
 
-  constructor(cadastroClientes) {
+  constructor(cadastroClientes, gerenciadorVagas = null) {
     this.cadastroClientes = cadastroClientes;
+    this.gerenciadorVagas = gerenciadorVagas;
     /** @type {import('../descontos/Desconto')[]} */
     this.descontosDisponiveis = [new DescontoClienteFrequente()];
     /** @type {Map<string, TicketEstacionamento>} */
@@ -29,6 +30,7 @@ class RegistroDeEntradas_E_Saidas {
   */
 
   possuiVagaDisponivel() {
+    if (this.gerenciadorVagas) return this.gerenciadorVagas.temVagaDisponivel();
     return this.ticketsAbertos.size < RegistroDeEntradas_E_Saidas.CAPACIDADE_TOTAL;
   }
 
@@ -67,7 +69,12 @@ class RegistroDeEntradas_E_Saidas {
       }
     }
 
-    const ticket = new TicketEstacionamento(placa, new Date());
+    const clienteParaAlocacao = cliente ?? (this.gerenciadorVagas ? new ClienteAvulso(placa) : null);
+    const veiculo = clienteParaAlocacao?.placas.get(placa) ?? null;
+    const vaga = this.gerenciadorVagas
+      ? this.gerenciadorVagas.alocar(placa, clienteParaAlocacao, veiculo)
+      : null;
+    const ticket = new TicketEstacionamento(placa, new Date(), vaga?.id ?? null);
     this.ticketsAbertos.set(placa, ticket);
 
     if (cliente && 'placaAtualEstacionada' in cliente) {
@@ -150,6 +157,10 @@ class RegistroDeEntradas_E_Saidas {
       valorDesconto,
       valorPago,
     });
+
+    if (this.gerenciadorVagas) {
+      this.gerenciadorVagas.liberarPorPlaca(placa);
+    }
 
     if (!this.historicoPorPlaca.has(placa)) {
       this.historicoPorPlaca.set(placa, []);
