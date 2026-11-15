@@ -123,8 +123,8 @@ class Empresa extends Cliente {
    * @returns {boolean}
    */
 
-  podeAutorizarEntrada() {
-    this.verificarVencimento(new Date());
+  podeAutorizarEntrada(contexto = {}) {
+    this.verificarVencimento(contexto.dataAtual instanceof Date ? contexto.dataAtual : new Date());
     return !this.inadimplente;
   }
 }
