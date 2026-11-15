@@ -1,11 +1,14 @@
 const CadastroClientes = require('../src/clientes/CadastroClientes');
 const ClientesCsv = require('../src/persistencia/ClientesCsv');
 const path = require('path');
+const fs = require('fs');
+const os = require('os');
 
-const caminho = path.join('/tmp', 'clientes_teste.csv');
+const DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'clientes-csv-'));
+process.on('exit', () => fs.rmSync(DIR, { recursive: true, force: true }));
+const caminho = path.join(DIR, 'clientes_teste.csv');
 
 // 1) escreve um CSV de exemplo manualmente e carrega
-const fs = require('fs');
 fs.writeFileSync(caminho, [
   '11111111111,Ana Estudante,50,Estudante,EST1A23',
   '22222222222,Bruno Professor,,Professor,PRF1B23;PRF2C45',
@@ -24,7 +27,7 @@ console.log('placasCadastradas:', Array.from(cadastro1.placasCadastradas));
 console.log('mapaPlacaParaCliente tem EST1A23?', cadastro1.mapaPlacaParaCliente.has('EST1A23'));
 
 // 2) salva de volta e recarrega para comparar (round-trip)
-const caminho2 = path.join('/tmp', 'clientes_teste_salvo.csv');
+const caminho2 = path.join(DIR, 'clientes_teste_salvo.csv');
 ClientesCsv.salvar(caminho2, cadastro1);
 console.log('\n--- CSV salvo ---');
 console.log(fs.readFileSync(caminho2, 'utf-8'));
@@ -39,5 +42,5 @@ for (const c of cadastro2.listarClientes()) {
 
 // 3) teste de arquivo inexistente (primeira execução) não deve lançar erro
 const cadastro3 = new CadastroClientes();
-ClientesCsv.carregar('/tmp/nao_existe_XYZ.csv', cadastro3);
+ClientesCsv.carregar(path.join(DIR, 'nao_existe_XYZ.csv'), cadastro3);
 console.log('\nArquivo inexistente -> totalClientes:', cadastro3.totalClientes);
