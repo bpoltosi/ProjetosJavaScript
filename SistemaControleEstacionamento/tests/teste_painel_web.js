@@ -90,8 +90,8 @@ async function executar() {
     assert.match(javascript, /mapPageSize: 80/);
     assert.match(javascript, /ParkingPixelAssets/);
     assert.doesNotMatch(javascript, /react-dom|createRoot\(|new Phaser\./i);
-    const idsHtml = new Set(Array.from(html.matchAll(/\\bid="([^"]+)"/g), (match) => match[1]));
-    const idsConsultados = Array.from(javascript.matchAll(/\\$\\('#([^']+)'\\)/g), (match) => match[1]);
+    const idsHtml = new Set(Array.from(html.matchAll(/\bid="([^"]+)"/g), (match) => match[1]));
+    const idsConsultados = Array.from(javascript.matchAll(/\$\('#([^']+)'\)/g), (match) => match[1]);
     idsConsultados.forEach((id) => assert.ok(idsHtml.has(id), `o painel consulta #${id}, que deve existir no HTML`));
     const assetsResposta = await fetch(`${baseUrl}/assets/pixel-assets.js`);
     assert.equal(assetsResposta.status, 200);
