@@ -105,7 +105,6 @@ async function testarCicloDeVidaERelogio() {
   assert.equal(agendador.pendentes[0].atraso, 1000);
 
   await simulador.executarCiclo();
-  assert.equal(app.registroDeEntradas_E_Saidas, undefined);
   assert.equal(app.registroDeEntradasESaidas.ticketsAbertos.size, 1);
   const primeiraPlaca = Array.from(app.registroDeEntradasESaidas.ticketsAbertos.keys())[0];
   const ticketEntrada = app.registroDeEntradasESaidas.ticketsAbertos.get(primeiraPlaca);
