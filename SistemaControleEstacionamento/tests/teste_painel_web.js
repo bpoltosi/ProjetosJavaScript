@@ -31,6 +31,10 @@ async function executar() {
     assert.match(html, /id="generationForm"/);
     assert.match(html, /id="eventTerminal"/);
     assert.match(html, /id="startSimulationButton"/);
+    assert.match(html, /id="parkingCanvas"/);
+    assert.match(html, /id="mapCategoryFilter"/);
+    assert.match(html, /id="mapPrevPage"/);
+    assert.match(html, /id="mapNextPage"/);
     assert.match(html, /\/styles\.css/);
     assert.match(html, /\/app\.js/);
     console.log('✅ Página principal entrega assistente de configuração e controles operacionais do painel.');
@@ -43,6 +47,9 @@ async function executar() {
     assert.match(css, /@media/);
     assert.match(css, /\.vacancy-occupied/);
     assert.match(css, /\.event-terminal/);
+    assert.match(css, /\.canvas-shell/);
+    assert.match(css, /image-rendering: pixelated/);
+    assert.match(css, /\.map-pagination/);
     console.log('✅ Folha de estilos é servida com identidade pixel art e layout responsivo.');
 
     const jsResposta = await fetch(`${baseUrl}/app.js`);
@@ -71,8 +78,14 @@ async function executar() {
     assert.match(javascript, /setInterval/);
     assert.match(javascript, /pagamentoRecusado/);
     assert.match(javascript, /origem: 'api'/);
+    assert.match(javascript, /getContext\('2d'\)/);
+    assert.match(javascript, /imageSmoothingEnabled = false/);
+    assert.match(javascript, /mapHitBoxes/);
+    assert.match(javascript, /selecionarVagaNoMapa/);
+    assert.match(javascript, /micro-onibus/);
+    assert.match(javascript, /mapPageSize: 80/);
     assert.doesNotMatch(javascript, /react-dom|createRoot\(|new Phaser\./i);
-    console.log('✅ JavaScript do painel usa API HTTP, polling e renderização segura de texto sem framework.');
+    console.log('✅ Frontend usa API HTTP e Canvas 2D com sprites, seleção por hitbox e paginação real de vagas.');
 
     const health = await fetch(`${baseUrl}/api/health`);
     const dadosHealth = await health.json();
