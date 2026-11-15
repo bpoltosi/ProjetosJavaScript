@@ -55,6 +55,7 @@ function criarCaminhos(diretorio) {
     tickets: path.join(diretorio, 'tickets.csv'),
     bloqueios: path.join(diretorio, 'bloqueios.csv'),
     veiculos: path.join(diretorio, 'veiculos.json'),
+    vagas: path.join(diretorio, 'estado-vagas.json'),
   };
 }
 
@@ -112,6 +113,7 @@ function executar() {
   assert.throws(() => app.gerenciadorVagas.bloquear('NAO-EXISTE'), /não encontrada/);
   app.gerenciadorVagas.desbloquear(vagaLivre.id);
   assert.equal(app.gerenciadorVagas.buscarPorId(vagaLivre.id).status, 'livre');
+  app.gerenciadorVagas.bloquear(vagaLivre.id);
   console.log('✅ Vagas podem ser bloqueadas/desbloqueadas sem afetar vagas ocupadas.');
 
   const diretorio = fs.mkdtempSync(path.join(os.tmpdir(), 'estacionamento-vagas-'));
@@ -126,7 +128,8 @@ function executar() {
     assert.equal(ticketAberto.vagaId, 'ACESSIVEL-001');
     assert.equal(appRestaurado.gerenciadorVagas.buscarPorPlaca('DEF4G56').id, 'ACESSIVEL-001');
     assert.equal(appRestaurado.resumoVagas().ocupadas, 2);
-    console.log('✅ A ocupação e o ID da vaga são restaurados após salvar e carregar os CSVs.');
+    assert.equal(appRestaurado.gerenciadorVagas.buscarPorId(vagaLivre.id).status, 'bloqueada');
+    console.log('✅ Ocupação, ID da vaga e bloqueio de manutenção são restaurados após salvar e carregar os dados.');
 
     const configIncompativel = new ConfiguracaoEstacionamento({
       versao: 1,
