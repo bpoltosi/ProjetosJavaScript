@@ -225,8 +225,8 @@ async function executar() {
     assert.equal(packageJson.scripts.web, 'node server.js');
     const mainSource = fs.readFileSync(path.join(__dirname, '..', 'main.js'), 'utf8');
     const serverSource = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
-    assert.ok(mainSource.includes('process.env.ESTACIONAMENTO_DIR_DADOS'));
-    assert.ok(mainSource.includes('process.env.ESTACIONAMENTO_CONFIG'));
+      assert.ok(mainSource.includes("'" + arquivo + "'"), 'CLI deve usar ' + arquivo);
+      assert.ok(serverSource.includes("'" + arquivo + "'"), 'servidor web deve usar ' + arquivo);
     for (const arquivo of ['clientes.csv', 'tickets.csv', 'bloqueios.csv', 'veiculos.json', 'estado-vagas.json', 'eventos.jsonl']) {
       assert.ok(mainSource.includes(\`'\${arquivo}'\`), `CLI deve usar ${arquivo}`);
       assert.ok(serverSource.includes(\`'\${arquivo}'\`), `servidor web deve usar ${arquivo}`);
