@@ -685,7 +685,15 @@
     if (veiculos.some((veiculo) => veiculo.placa === valorAnterior)) seletor.value = valorAnterior;
     $('#duplicateEntryButton').disabled = veiculos.length === 0;
     atualizarCampoRecusa();
-    renderizarDetalhes(seletor.value);
+    if (seletor.value) {
+      renderizarDetalhes(seletor.value);
+    } else if (state.selectedSlotId) {
+      const vaga = state.vagas.find((item) => item.id === state.selectedSlotId);
+      if (vaga) renderizarDetalhesVaga(vaga);
+      else renderizarDetalhes('');
+    } else {
+      renderizarDetalhes('');
+    }
   }
 
   function atualizarCampoRecusa() {
