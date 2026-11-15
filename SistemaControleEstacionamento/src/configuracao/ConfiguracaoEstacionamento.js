@@ -1,3 +1,5 @@
+const CategoriaCliente = require('../clientes/CategoriaCliente');
+
 const TIPOS_VEICULO = Object.freeze([
   'motocicleta',
   'compacto',
@@ -33,6 +35,7 @@ class ConfiguracaoEstacionamento {
     this.nome = validado.nome;
     this.capacidadeTotal = validado.capacidadeTotal;
     this.categorias = validado.categorias;
+    this.perfisCliente = validado.perfisCliente;
   }
 
   /**
@@ -119,7 +122,28 @@ class ConfiguracaoEstacionamento {
       `a soma das vagas por categoria (${totalDistribuido}) deve ser igual à capacidade total (${capacidadeTotal})`
     );
 
-    return { versao, nome, capacidadeTotal, categorias };
+    const perfisCliente = dados.perfisCliente ?? [];
+    exigir(Array.isArray(perfisCliente), 'perfisCliente deve ser uma lista');
+
+    const idsPerfis = new Set();
+    const nomesPerfis = new Set();
+    const perfisNormalizados = perfisCliente.map((perfil) => {
+      const perfilJson = new CategoriaCliente(perfil).toJSON();
+      const nomePerfil = perfilJson.nome.toLocaleLowerCase('pt-BR');
+
+      exigir(!idsPerfis.has(perfilJson.id), `id de perfil de cliente duplicado: ${perfilJson.id}`);
+      exigir(!nomesPerfis.has(nomePerfil), `nome de perfil de cliente duplicado: ${perfilJson.nome}`);
+      idsPerfis.add(perfilJson.id);
+      nomesPerfis.add(nomePerfil);
+
+      for (const idCategoriaVaga of perfilJson.categoriasVagaPermitidas) {
+        exigir(idCategoriaVaga === '*' || ids.has(idCategoriaVaga),
+          `categoria de vaga inexistente no perfil ${perfilJson.id}: ${idCategoriaVaga}`);
+      }
+      return perfilJson;
+    });
+
+    return { versao, nome, capacidadeTotal, categorias, perfisCliente: perfisNormalizados };
   }
 
   /**
@@ -130,6 +154,7 @@ class ConfiguracaoEstacionamento {
       versao: this.versao,
       nome: this.nome,
       capacidadeTotal: this.capacidadeTotal,
+      perfisCliente: this.perfisCliente.map((perfil) => ({ ...perfil, categoriasVagaPermitidas: [...perfil.categoriasVagaPermitidas] })),
       categorias: this.categorias.map((categoria) => ({
         ...categoria,
         criteriosElegibilidade: {

@@ -10,6 +10,7 @@ const caminhos = {
   clientes: path.join(DIR, 'clientes.csv'),
   tickets: path.join(DIR, 'tickets.csv'),
   bloqueios: path.join(DIR, 'bloqueios.csv'),
+  veiculos: path.join(DIR, 'veiculos.json'),
 };
 
 const app1 = new App();
@@ -17,7 +18,7 @@ const estudante = new Estudante('11111111111', 'Ana Estudante', 20);
 const professor = new Professor('22222222222', 'Bruno Professor');
 app1.cadastrarCliente(estudante);
 app1.cadastrarCliente(professor);
-app1.registrarPlaca(estudante.documento, 'EST1A23');
+app1.registrarPlaca(estudante.documento, 'EST1A23', { tipo: 'compacto', cor: '#4477BB' });
 app1.registrarPlaca(professor.documento, 'PRF1B23');
 app1.autorizarEntrada('PRF1B23'); // fica dentro
 
@@ -31,6 +32,8 @@ const falhas = [];
 if (app2.listarClientes().length !== 2) falhas.push('quantidade de clientes divergente');
 if (!app2.veiculoEstaDentro('PRF1B23')) falhas.push('veículo do professor não restaurado como dentro');
 if (professor2.placaAtualEstacionada !== 'PRF1B23') falhas.push('estado derivado do professor não restaurado via App.carregarTudo');
+const veiculoEstudante2 = app2.buscarClientePorDocumento('11111111111').placas.get('EST1A23');
+if (veiculoEstudante2.tipo !== 'compacto' || veiculoEstudante2.cor !== '#4477BB') falhas.push('metadados visuais do veículo não restaurados');
 
 if (falhas.length === 0) {
   console.log('✅ App.carregarTudo/salvarTudo funcionam corretamente end-to-end');

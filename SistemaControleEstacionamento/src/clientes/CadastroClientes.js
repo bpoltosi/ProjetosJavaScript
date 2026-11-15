@@ -54,7 +54,7 @@ class CadastroClientes {
    * @param {string} placa
    */
 
-  registrarPlaca(documento, placa) {
+  registrarPlaca(documento, placa, caracteristicas) {
     const cliente = this.clientesPorDocumento.get(documento);
     if (!cliente) {
       throw new Error('cliente não encontrado para o documento informado');
@@ -65,7 +65,7 @@ class CadastroClientes {
     }
     // adicionarPlaca devolve a placa já normalizada (mesma chave usada em
     // cliente.placas), garantindo que os índices abaixo fiquem consistentes.
-    const placaRegistrada = cliente.adicionarPlaca(placa);
+    const placaRegistrada = cliente.adicionarPlaca(placa, caracteristicas);
     this.placasCadastradas.add(placaRegistrada);
     this.mapaPlacaParaCliente.set(placaRegistrada, cliente);
   }
@@ -120,6 +120,13 @@ class CadastroClientes {
   /**
    * @returns {import('./Cliente')[]}
    */
+
+  listarPorCategoria(categoriaId) {
+    if (typeof categoriaId !== 'string' || categoriaId.trim() === '') {
+      throw new Error('categoriaId deve ser informado');
+    }
+    return this.listarClientes().filter((cliente) => cliente.categoriaId === categoriaId);
+  }
 
   listarBloqueados() {
     return this.listarClientes().filter((cliente) => !cliente.podeAutorizarEntrada());
