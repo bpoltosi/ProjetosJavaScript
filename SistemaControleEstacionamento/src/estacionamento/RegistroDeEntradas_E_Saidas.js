@@ -4,102 +4,181 @@ const DescontoClienteFrequente = require('../descontos/DescontoClienteFrequente'
 
 /*
   Orquestra entradas, saídas, capacidade, bloqueio de avulsos e descontos.
+  O registro de eventos é opcional para preservar compatibilidade com usos
+  antigos da classe fora da aplicação principal.
 */
 class RegistroDeEntradas_E_Saidas {
   static CAPACIDADE_TOTAL = 9000;
 
-  /**
-   * @param {import('../clientes/CadastroClientes')} cadastroClientes
-  */
-
-  constructor(cadastroClientes, gerenciadorVagas = null) {
+  constructor(cadastroClientes, gerenciadorVagas = null, registroEventos = null) {
     this.cadastroClientes = cadastroClientes;
     this.gerenciadorVagas = gerenciadorVagas;
-    /** @type {import('../descontos/Desconto')[]} */
+    this.registroEventos = registroEventos;
     this.descontosDisponiveis = [new DescontoClienteFrequente()];
-    /** @type {Map<string, TicketEstacionamento>} */
     this.ticketsAbertos = new Map();
-    /** @type {Map<string, TicketEstacionamento[]>} */
     this.historicoPorPlaca = new Map();
-    /** @type {Set<string>} */
     this.placasBloqueadas = new Set();
   }
-
-  /**
-   * @returns {boolean}
-  */
 
   possuiVagaDisponivel() {
     if (this.gerenciadorVagas) return this.gerenciadorVagas.temVagaDisponivel();
     return this.ticketsAbertos.size < RegistroDeEntradas_E_Saidas.CAPACIDADE_TOTAL;
   }
 
-  /**
-   * @param {string} placa
-   * @returns {boolean}
-  */
-
   veiculoEstaDentro(placa) {
     return this.ticketsAbertos.has(placa);
   }
 
-  /**
-   * @param {string} placa
-   * @returns {TicketEstacionamento}
-  */
-
-  autorizarEntrada(placa) {
-    if (this.placasBloqueadas.has(placa)) {
-      throw new Error('placa bloqueada');
-    }
-    if (this.veiculoEstaDentro(placa)) {
-      throw new Error('veículo já está dentro do estacionamento');
-    }
-    if (!this.possuiVagaDisponivel()) {
-      throw new Error('estacionamento lotado');
-    }
-
-    const cliente = this.cadastroClientes.buscarClientePorPlaca(placa);
-    if (cliente) {
-      const autorizado = cliente.podeAutorizarEntrada({
-        ticketsAbertos: this.ticketsAbertos,
-      });
-      if (!autorizado) {
-        throw new Error('entrada não autorizada para este cliente');
-      }
-    }
-
-    const clienteParaAlocacao = cliente ?? (this.gerenciadorVagas ? new ClienteAvulso(placa) : null);
-    const veiculo = clienteParaAlocacao?.placas.get(placa) ?? null;
-    const vaga = this.gerenciadorVagas
-      ? this.gerenciadorVagas.alocar(placa, clienteParaAlocacao, veiculo)
-      : null;
-    const ticket = new TicketEstacionamento(placa, new Date(), vaga?.id ?? null);
-    this.ticketsAbertos.set(placa, ticket);
-
-    if (cliente && 'placaAtualEstacionada' in cliente) {
-      cliente.placaAtualEstacionada = placa;
-    }
-    return ticket;
+  _contextoEvento(placa, cliente, veiculo, vaga, origem, dados = {}) {
+    return {
+      placa,
+      tipoVeiculo: veiculo?.tipo ?? null,
+      corVeiculo: veiculo?.cor ?? null,
+      categoriaCliente: cliente?.categoriaId ?? null,
+      vagaId: vaga?.id ?? null,
+      origem,
+      ...dados,
+    };
   }
 
-  /**
-   * @param {string} placa
-   * @param {{ pagamentoRecusado?: boolean }} [opcoes]
-   * @returns {TicketEstacionamento}
-  */
+  _registrarEventos(eventos) {
+    if (!this.registroEventos) return;
+    try {
+      this.registroEventos.registrarVarios(eventos);
+    } catch (erro) {
+      erro.eventoRegistroFalhou = true;
+      throw erro;
+    }
+  }
+
+  _registrarNegacao(evento) {
+    try {
+      this._registrarEventos([evento]);
+    } catch (erroRegistro) {
+      // A falha no log não deve esconder a recusa original nem alterar o domínio.
+      return erroRegistro;
+    }
+    return null;
+  }
+
+  autorizarEntrada(placa, opcoes = {}) {
+    const origem = opcoes.origem ?? 'manual';
+    let cliente = null;
+    let veiculo = null;
+
+    try {
+      if (typeof placa === 'string' && placa.trim() !== '') {
+        cliente = this.cadastroClientes.buscarClientePorPlaca(placa.trim().toUpperCase());
+        const clienteVeiculo = cliente ?? (this.gerenciadorVagas ? new ClienteAvulso(placa) : null);
+        veiculo = clienteVeiculo?.placas.get(placa.trim().toUpperCase()) ?? null;
+        if (!cliente) cliente = clienteVeiculo;
+      }
+
+      if (this.placasBloqueadas.has(placa)) {
+        throw new Error('placa bloqueada');
+      }
+      if (this.veiculoEstaDentro(placa)) {
+        throw new Error('veículo já está dentro do estacionamento');
+      }
+      if (!this.possuiVagaDisponivel()) {
+        throw new Error('estacionamento lotado');
+      }
+
+      const clienteCadastrado = this.cadastroClientes.buscarClientePorPlaca(placa);
+      if (clienteCadastrado) {
+        const autorizado = clienteCadastrado.podeAutorizarEntrada({
+          ticketsAbertos: this.ticketsAbertos,
+        });
+        if (!autorizado) {
+          throw new Error('entrada não autorizada para este cliente');
+        }
+      }
+
+      const clienteParaAlocacao = clienteCadastrado ??
+        (this.gerenciadorVagas ? new ClienteAvulso(placa) : null);
+      veiculo = clienteParaAlocacao?.placas.get(placa) ?? null;
+      const vaga = this.gerenciadorVagas
+        ? this.gerenciadorVagas.alocar(placa, clienteParaAlocacao, veiculo)
+        : null;
+      const ticket = new TicketEstacionamento(placa, new Date(), vaga?.id ?? null);
+
+      try {
+        const dadosEvento = this._contextoEvento(
+          placa,
+          clienteParaAlocacao,
+          veiculo,
+          vaga,
+          origem,
+          { resultado: 'autorizado' }
+        );
+        const eventos = [{
+          ...dadosEvento,
+          tipo: 'ENTRADA_AUTORIZADA',
+          detalhes: 'Entrada autorizada e ticket criado.',
+        }];
+        if (vaga) {
+          eventos.push({
+            ...dadosEvento,
+            tipo: 'VAGA_ALOCADA',
+            resultado: 'ocupada',
+            detalhes: `Vaga ${vaga.id} alocada ao veículo.`,
+          });
+        }
+        this._registrarEventos(eventos);
+      } catch (erroRegistro) {
+        if (vaga && this.gerenciadorVagas) {
+          this.gerenciadorVagas.liberarPorPlaca(placa);
+        }
+        throw erroRegistro;
+      }
+
+      // Commit do estado operacional ocorre somente após persistir o evento.
+      this.ticketsAbertos.set(placa, ticket);
+      if (clienteCadastrado && 'placaAtualEstacionada' in clienteCadastrado) {
+        clienteCadastrado.placaAtualEstacionada = placa;
+      }
+      return ticket;
+    } catch (erro) {
+      if (!erro.eventoRegistroFalhou) {
+        const clienteContexto = cliente ??
+          this.cadastroClientes.buscarClientePorPlaca(
+            typeof placa === 'string' ? placa.trim().toUpperCase() : placa
+          );
+        const veiculoContexto = veiculo ??
+          clienteContexto?.placas.get(typeof placa === 'string' ? placa.trim().toUpperCase() : placa);
+        this._registrarNegacao({
+          ...this._contextoEvento(placa, clienteContexto, veiculoContexto, null, origem, {
+            resultado: 'negado',
+            motivo: erro.message,
+            detalhes: 'Tentativa de entrada recusada pelo backend.',
+          }),
+          tipo: 'ENTRADA_NEGADA',
+        });
+      }
+      throw erro;
+    }
+  }
 
   processarSaida(placa, opcoes = {}) {
-    if (!this.veiculoEstaDentro(placa)) {
-      throw new Error('veículo não está registrado como dentro');
-    }
-
+    const origem = opcoes.origem ?? 'manual';
     const ticket = this.ticketsAbertos.get(placa);
-    this.ticketsAbertos.delete(placa);
+    const clienteCadastrado = this.cadastroClientes.buscarClientePorPlaca(placa);
+    const clienteContexto = clienteCadastrado ??
+      (ticket && this.gerenciadorVagas ? new ClienteAvulso(placa) : null);
+    const veiculo = clienteCadastrado?.placas.get(placa) ??
+      (clienteContexto instanceof ClienteAvulso ? clienteContexto.placas.get(placa) : null);
 
-    const cliente = this.cadastroClientes.buscarClientePorPlaca(placa);
-    if (cliente && 'placaAtualEstacionada' in cliente) {
-      cliente.placaAtualEstacionada = null;
+    if (!ticket) {
+      const erro = new Error('veículo não está registrado como dentro');
+      this._registrarNegacao({
+        ...this._contextoEvento(placa, clienteContexto, veiculo, null, origem, {
+          resultado: 'negado',
+          motivo: erro.message,
+          detalhes: 'Tentativa de saída recusada: não existe ticket aberto para a placa.',
+        }),
+        tipo: 'SAIDA_NEGADA',
+      });
+      throw erro;
     }
 
     const dataHoraSaida = new Date();
@@ -107,24 +186,21 @@ class RegistroDeEntradas_E_Saidas {
     let descontoId = 'nenhum';
     let valorDesconto = 0;
     let valorPago;
+    let registrarDebito = false;
+    let debitarSaldo = false;
+    let pagamentoRecusado = false;
 
-    if (cliente) {
-      custoOriginal = cliente.calcularCusto(ticket.dataHoraEntrada, dataHoraSaida);
+    if (clienteCadastrado) {
+      custoOriginal = clienteCadastrado.calcularCusto(ticket.dataHoraEntrada, dataHoraSaida);
       valorPago = custoOriginal;
-      if (typeof cliente.debitar === 'function') {
-        cliente.debitar(custoOriginal);
-      }
-      if (typeof cliente.registrarDebito === 'function') {
-        cliente.registrarDebito(custoOriginal);
-      }
+      debitarSaldo = typeof clienteCadastrado.debitar === 'function';
+      registrarDebito = typeof clienteCadastrado.registrarDebito === 'function';
     } else {
       const historico = this.buscarTicketsPorPlacaEPeriodo(
         placa,
         new Date(0),
         dataHoraSaida
       );
-
-      // Inclui a permanencia atual para que a 3 visita possa receber o desconto.
       const historicoParaDesconto = [...historico, ticket];
       const descontoEncontrado = this.descontosDisponiveis.find((desconto) =>
         desconto.aplicavel(historicoParaDesconto, dataHoraSaida)
@@ -140,15 +216,58 @@ class RegistroDeEntradas_E_Saidas {
       custoOriginal = avulso.calcularCusto(ticket.dataHoraEntrada, dataHoraSaida);
       valorDesconto = custoOriginal - valorComDesconto;
       descontoId = descontoEncontrado ? descontoEncontrado.identificador : 'nenhum';
-
       const valorDevido = custoOriginal - valorDesconto;
-      if (opcoes.pagamentoRecusado === true) {
-        valorPago = 0;
-        this.placasBloqueadas.add(placa);
-      } else {
-        valorPago = valorDevido;
-      }
+      pagamentoRecusado = opcoes.pagamentoRecusado === true;
+      valorPago = pagamentoRecusado ? 0 : valorDevido;
     }
+
+    const vagaOcupada = this.gerenciadorVagas?.buscarPorPlaca(placa) ?? null;
+    const vagaId = ticket.vagaId ?? vagaOcupada?.id ?? null;
+    const resultado = pagamentoRecusado ? 'recusado' : 'concluido';
+    const dadosEvento = this._contextoEvento(
+      placa,
+      clienteContexto,
+      veiculo,
+      vagaOcupada,
+      origem,
+      {
+        vagaId,
+        resultado,
+        detalhes: pagamentoRecusado
+          ? `Saída registrada com pagamento recusado. Valor devido: ${custoOriginal - valorDesconto}.`
+          : `Saída processada. Valor pago: ${valorPago}.`,
+      }
+    );
+    const eventos = [{
+      ...dadosEvento,
+      tipo: pagamentoRecusado ? 'SAIDA_PAGAMENTO_RECUSADO' : 'SAIDA_CONCLUIDA',
+      motivo: pagamentoRecusado ? 'Pagamento recusado pelo cliente.' : null,
+    }];
+    if (vagaId) {
+      eventos.push({
+        ...dadosEvento,
+        tipo: 'VAGA_LIBERADA',
+        resultado: 'livre',
+        detalhes: `Vaga ${vagaId} liberada após a saída.`,
+      });
+    }
+    if (pagamentoRecusado) {
+      eventos.push({
+        ...dadosEvento,
+        tipo: 'PLACA_BLOQUEADA',
+        resultado: 'bloqueada',
+        motivo: 'Pagamento recusado.',
+        detalhes: 'Placa bloqueada para novas entradas até regularização.',
+      });
+    }
+
+    // Persistir o evento (ou o lote de eventos) precede qualquer mutação do ticket,
+    // saldo do cliente, bloqueios ou ocupação de vaga.
+    this._registrarEventos(eventos);
+
+    if (debitarSaldo) clienteCadastrado.debitar(custoOriginal);
+    if (registrarDebito) clienteCadastrado.registrarDebito(custoOriginal);
+    if (pagamentoRecusado) this.placasBloqueadas.add(placa);
 
     ticket.fecharSaida({
       dataHoraSaida,
@@ -157,10 +276,11 @@ class RegistroDeEntradas_E_Saidas {
       valorDesconto,
       valorPago,
     });
-
-    if (this.gerenciadorVagas) {
-      this.gerenciadorVagas.liberarPorPlaca(placa);
+    this.ticketsAbertos.delete(placa);
+    if (clienteCadastrado && 'placaAtualEstacionada' in clienteCadastrado) {
+      clienteCadastrado.placaAtualEstacionada = null;
     }
+    if (this.gerenciadorVagas) this.gerenciadorVagas.liberarPorPlaca(placa);
 
     if (!this.historicoPorPlaca.has(placa)) {
       this.historicoPorPlaca.set(placa, []);
@@ -169,27 +289,12 @@ class RegistroDeEntradas_E_Saidas {
     return ticket;
   }
 
-  /**
-   * @param {string} placa
-   * @param {Date} inicio
-   * @param {Date} fim
-   * @returns {TicketEstacionamento[]}
-  */
- 
   buscarTicketsPorPlacaEPeriodo(placa, inicio, fim) {
     const historico = this.historicoPorPlaca.get(placa) ?? [];
     return historico.filter(
       (ticket) => ticket.dataHoraEntrada >= inicio && ticket.dataHoraEntrada <= fim
     );
   }
-
-  /**
-    Retorna todos os tickets conhecidos (abertos e fechados, de todas as placas).
-    Necessário para a persistência (TicketsCsv.salvar) e para os relatórios agregados
-    da Fase 2 (valorArrecadadoPorPeriodo, top10ClientesFrequentesDoAno), que precisam
-    varrer o histórico completo e não apenas o de uma placa específica.
-   * @returns {TicketEstacionamento[]}
-  */
 
   todosOsTickets() {
     const fechados = [];
