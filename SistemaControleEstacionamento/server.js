@@ -78,7 +78,11 @@ function statusDoErro(erro) {
     mensagem.includes('não há vaga') ||
     mensagem.includes('não é possível') ||
     mensagem.includes('não se aplica') ||
-    mensagem.includes('não autorizada')
+    mensagem.includes('não autorizada') ||
+    mensagem.includes('simulação já') ||
+    mensagem.includes('somente uma simulação') ||
+    mensagem.includes('somente uma simulação pausada') ||
+    mensagem.includes('somente uma simulação em execução')
   ) return 409;
   return 500;
 }
@@ -372,6 +376,38 @@ function criarServidor(opcoes = {}) {
     res.json({ mensagem: 'Saída processada.', ticket: resumirTicket(ticket), cobranca });
   });
 
+  httpApp.get('/api/simulacao', (req, res) => {
+    res.json(estacionamento.estadoSimulacao());
+  });
+
+  httpApp.post('/api/simulacao/iniciar', (req, res) => {
+    const estado = estacionamento.iniciarSimulacao(req.body ?? {});
+    res.status(201).json({
+      mensagem: 'Simulação iniciada.',
+      ...estado,
+    });
+  });
+
+  httpApp.post('/api/simulacao/pausar', (req, res) => {
+    const estado = estacionamento.pausarSimulacao();
+    res.json({ mensagem: 'Simulação pausada.', ...estado });
+  });
+
+  httpApp.post('/api/simulacao/retomar', (req, res) => {
+    const estado = estacionamento.retomarSimulacao();
+    res.json({ mensagem: 'Simulação retomada.', ...estado });
+  });
+
+  httpApp.put('/api/simulacao/velocidade', (req, res) => {
+    const estado = estacionamento.definirVelocidadeSimulacao(req.body?.velocidade);
+    res.json({ mensagem: 'Velocidade atualizada.', ...estado });
+  });
+
+  httpApp.post('/api/simulacao/encerrar', async (req, res) => {
+    const estado = await estacionamento.encerrarSimulacao();
+    res.json({ mensagem: 'Simulação encerrada e veículos do simulador retirados.', ...estado });
+  });
+
   httpApp.post('/api/vagas/:id/bloquear', (req, res) => {
     const vaga = estacionamento.bloquearVaga(req.params.id, { origem: 'api' });
     res.json({ mensagem: 'Vaga bloqueada.', vaga });
@@ -401,7 +437,7 @@ function criarServidor(opcoes = {}) {
     });
   });
 
-  return { httpApp, estacionamento, caminhos, caminhoConfiguracao };
+  return { httpApp, estacionamento, simulador: estacionamento.simulador, caminhos, caminhoConfiguracao };
 }
 
 function iniciarServidor() {
@@ -423,13 +459,14 @@ function iniciarServidor() {
     if (encerrando) return;
     encerrando = true;
     console.log(`\nRecebido ${sinal}; encerrando servidor e salvando dados...`);
-    servidor.close(() => {
+    servidor.close(async () => {
       try {
+        await instancia.simulador.encerrar();
         instancia.estacionamento.salvarTudo(instancia.caminhos);
-        console.log('Dados salvos. Servidor encerrado.');
+        console.log('Simulação encerrada, dados salvos. Servidor encerrado.');
         process.exit(0);
       } catch (erro) {
-        console.error(`Falha ao salvar dados durante encerramento: ${erro.message}`);
+        console.error(`Falha ao encerrar/salvar o estacionamento: ${erro.message}`);
         process.exit(1);
       }
     });

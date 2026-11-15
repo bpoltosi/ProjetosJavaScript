@@ -42,6 +42,7 @@ class InterfaceUsuario {
       console.log('6) Sair');
       console.log('7) Terminal operacional (histórico de eventos)');
       console.log('8) Financeiro e regularização de bloqueios');
+      console.log('9) Simulação automatizada do estacionamento');
 
       const opcao = (await this.rl.question('Escolha uma opção: ')).trim();
 
@@ -62,6 +63,7 @@ class InterfaceUsuario {
           this._salvarComMensagem();
           break;
         case '6':
+          await this.app.encerrarSimulacao();
           continuar = false;
           break;
         case '7':
@@ -69,6 +71,9 @@ class InterfaceUsuario {
           break;
         case '8':
           await this._submenuRegularizacao();
+          break;
+        case '9':
+          await this._submenuSimulacao();
           break;
         default:
           console.log('Opção inválida.');
@@ -232,6 +237,71 @@ class InterfaceUsuario {
       }
     } catch (erro) {
       console.log(`❌ Erro ao processar saída: ${erro.message}`);
+    }
+  }
+
+  async _submenuSimulacao() {
+    let continuar = true;
+    while (continuar) {
+      const estado = this.app.estadoSimulacao();
+      console.log('\n--- Simulação Automatizada ---');
+      console.log(`Estado: ${estado.estado} | Velocidade: ${estado.velocidade}x | Veículos da simulação estacionados: ${estado.veiculosDaSimulacaoEstacionados}`);
+      console.log(`Chegadas: ${estado.estatisticas.chegadas} | Entradas: ${estado.estatisticas.entradasAutorizadas} | Negadas: ${estado.estatisticas.entradasNegadas} | Saídas: ${estado.estatisticas.saidas}`);
+      if (estado.ultimoErro) console.log(`Último erro: ${estado.ultimoErro}`);
+      console.log('1) Iniciar simulação');
+      console.log('2) Pausar');
+      console.log('3) Retomar');
+      console.log('4) Alterar velocidade (1x, 2x, 5x)');
+      console.log('5) Encerrar simulação');
+      console.log('0) Voltar ao menu principal');
+
+      const opcao = (await this.rl.question('Escolha uma operação: ')).trim();
+      try {
+        switch (opcao) {
+          case '0':
+            continuar = false;
+            break;
+          case '1': {
+            const velocidadeStr = (await this.rl.question('Velocidade (1, 2 ou 5; padrão 1): ')).trim();
+            const intervaloStr = (await this.rl.question('Intervalo de chegada em ms (padrão 5000): ')).trim();
+            const quantidadeStr = (await this.rl.question('Tamanho da frota (padrão 12): ')).trim();
+            const permanenciaMinStr = (await this.rl.question('Permanência mínima em ms (padrão 8000): ')).trim();
+            const permanenciaMaxStr = (await this.rl.question('Permanência máxima em ms (padrão 30000): ')).trim();
+            const resultado = this.app.iniciarSimulacao({
+              velocidade: velocidadeStr === '' ? 1 : Number(velocidadeStr),
+              intervaloChegadaMs: intervaloStr === '' ? 5000 : Number(intervaloStr),
+              quantidadeVeiculos: quantidadeStr === '' ? 12 : Number(quantidadeStr),
+              permanenciaMinMs: permanenciaMinStr === '' ? 8000 : Number(permanenciaMinStr),
+              permanenciaMaxMs: permanenciaMaxStr === '' ? 30000 : Number(permanenciaMaxStr),
+            });
+            console.log(`✅ Simulação iniciada com frota de ${resultado.veiculosNaFrota} veículo(s).`);
+            break;
+          }
+          case '2':
+            this.app.pausarSimulacao();
+            console.log('⏸️ Simulação pausada. Os veículos estacionados permanecem no estacionamento.');
+            break;
+          case '3':
+            this.app.retomarSimulacao();
+            console.log('▶️ Simulação retomada.');
+            break;
+          case '4': {
+            const velocidade = Number((await this.rl.question('Nova velocidade (1, 2 ou 5): ')).trim());
+            this.app.definirVelocidadeSimulacao(velocidade);
+            console.log(`✅ Velocidade atualizada para ${velocidade}x.`);
+            break;
+          }
+          case '5': {
+            const resultado = await this.app.encerrarSimulacao();
+            console.log(`✅ Simulação encerrada. ${resultado.veiculosDaSimulacaoEstacionados} veículo(s) permanecem estacionados pela simulação.`);
+            break;
+          }
+          default:
+            console.log('Opção inválida.');
+        }
+      } catch (erro) {
+        console.log(`❌ Não foi possível executar a ação: ${erro.message}`);
+      }
     }
   }
 

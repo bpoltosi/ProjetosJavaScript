@@ -40,6 +40,7 @@ class RegistroDeEntradas_E_Saidas {
       categoriaCliente: cliente?.categoriaId ?? null,
       vagaId: vaga?.id ?? null,
       origem,
+      timestamp: dados.timestamp ?? null,
       ...dados,
     };
   }
@@ -88,11 +89,14 @@ class RegistroDeEntradas_E_Saidas {
       }
 
       const clienteCadastrado = this.cadastroClientes.buscarClientePorPlaca(placa);
+      const dataAtualOperacao = opcoes.dataHoraEntrada instanceof Date
+        ? opcoes.dataHoraEntrada
+        : new Date();
       if (clienteCadastrado instanceof Empresa &&
           !clienteCadastrado.inadimplente &&
           clienteCadastrado.dataVencimentoBoleto !== null &&
           clienteCadastrado.saldoDevedor > 0 &&
-          new Date() > clienteCadastrado.dataVencimentoBoleto) {
+          dataAtualOperacao > clienteCadastrado.dataVencimentoBoleto) {
         this._registrarEventos([{
           tipo: 'CLIENTE_BLOQUEADO',
           resultado: 'bloqueado',
@@ -106,6 +110,7 @@ class RegistroDeEntradas_E_Saidas {
       if (clienteCadastrado) {
         const autorizado = clienteCadastrado.podeAutorizarEntrada({
           ticketsAbertos: this.ticketsAbertos,
+          dataAtual: dataAtualOperacao,
         });
         if (!autorizado) {
           throw new Error('entrada não autorizada para este cliente');
@@ -115,10 +120,14 @@ class RegistroDeEntradas_E_Saidas {
       const clienteParaAlocacao = clienteCadastrado ??
         (this.gerenciadorVagas ? new ClienteAvulso(placa) : null);
       veiculo = clienteParaAlocacao?.placas.get(placa) ?? null;
+      const dataHoraEntrada = opcoes.dataHoraEntrada instanceof Date
+        ? new Date(opcoes.dataHoraEntrada.getTime())
+        : new Date();
+      if (Number.isNaN(dataHoraEntrada.getTime())) throw new Error('dataHoraEntrada inválida');
       const vaga = this.gerenciadorVagas
         ? this.gerenciadorVagas.alocar(placa, clienteParaAlocacao, veiculo)
         : null;
-      const ticket = new TicketEstacionamento(placa, new Date(), vaga?.id ?? null);
+      const ticket = new TicketEstacionamento(placa, dataHoraEntrada, vaga?.id ?? null);
 
       try {
         const dadosEvento = this._contextoEvento(
@@ -127,7 +136,7 @@ class RegistroDeEntradas_E_Saidas {
           veiculo,
           vaga,
           origem,
-          { resultado: 'autorizado' }
+          { resultado: 'autorizado', timestamp: opcoes.timestamp ?? dataHoraEntrada }
         );
         const eventos = [{
           ...dadosEvento,
@@ -167,6 +176,7 @@ class RegistroDeEntradas_E_Saidas {
         this._registrarNegacao({
           ...this._contextoEvento(placa, clienteContexto, veiculoContexto, null, origem, {
             resultado: 'negado',
+            timestamp: opcoes.timestamp ?? null,
             motivo: erro.message,
             detalhes: 'Tentativa de entrada recusada pelo backend.',
           }),
@@ -191,6 +201,7 @@ class RegistroDeEntradas_E_Saidas {
       this._registrarNegacao({
         ...this._contextoEvento(placa, clienteContexto, veiculo, null, origem, {
           resultado: 'negado',
+          timestamp: opcoes.timestamp ?? null,
           motivo: erro.message,
           detalhes: 'Tentativa de saída recusada: não existe ticket aberto para a placa.',
         }),
@@ -199,7 +210,10 @@ class RegistroDeEntradas_E_Saidas {
       throw erro;
     }
 
-    const dataHoraSaida = new Date();
+    const dataHoraSaida = opcoes.dataHoraSaida instanceof Date
+      ? new Date(opcoes.dataHoraSaida.getTime())
+      : new Date();
+    if (Number.isNaN(dataHoraSaida.getTime())) throw new Error('dataHoraSaida inválida');
     if (opcoes.pagamentoRecusado === true && clienteCadastrado) {
       const erro = new Error('recusa de pagamento não se aplica a clientes cadastrados; a cobrança é feita por saldo, boleto ou gratuidade');
       this._registrarNegacao({
@@ -207,6 +221,7 @@ class RegistroDeEntradas_E_Saidas {
           this.gerenciadorVagas?.buscarPorPlaca(placa) ?? null,
           origem, {
             resultado: 'negado',
+            timestamp: opcoes.timestamp ?? null,
             motivo: erro.message,
             detalhes: 'Saída mantida em aberto porque clientes cadastrados não pagam na cancela.',
           }),
@@ -282,6 +297,7 @@ class RegistroDeEntradas_E_Saidas {
       {
         vagaId,
         resultado,
+        timestamp: opcoes.timestamp ?? dataHoraSaida,
         detalhes: pagamentoRecusado
           ? `Saída registrada com pagamento recusado. Valor devido: ${custoOriginal - valorDesconto}.`
           : `Saída processada. Valor pago: ${valorPago}.`,
