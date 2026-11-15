@@ -13,6 +13,7 @@ const GeradorClientes = require('./estacionamento/GeradorClientes');
 const Estudante = require('./clientes/Estudante');
 const Empresa = require('./clientes/Empresa');
 const ConfiguracaoEstacionamento = require('./configuracao/ConfiguracaoEstacionamento');
+const SimuladorEstacionamento = require('./estacionamento/SimuladorEstacionamento');
 
 /**
   Fachada do sistema. Continua sem I/O interativo (console.log/leitura de
@@ -41,6 +42,7 @@ class App {
       this.registroDeEntradasESaidas
     );
     this.geradorClientes = new GeradorClientes(this);
+    this.simulador = new SimuladorEstacionamento(this, opcoes.simulador ?? {});
   }
 
   /**
@@ -72,6 +74,30 @@ class App {
 
   gerarClientes(opcoes) {
     return this.geradorClientes.gerar(opcoes);
+  }
+
+  iniciarSimulacao(opcoes) {
+    return this.simulador.iniciar(opcoes);
+  }
+
+  pausarSimulacao() {
+    return this.simulador.pausar();
+  }
+
+  retomarSimulacao() {
+    return this.simulador.retomar();
+  }
+
+  definirVelocidadeSimulacao(velocidade) {
+    return this.simulador.definirVelocidade(velocidade);
+  }
+
+  encerrarSimulacao() {
+    return this.simulador.encerrar();
+  }
+
+  estadoSimulacao() {
+    return this.simulador.obterEstado();
   }
 
   /**
