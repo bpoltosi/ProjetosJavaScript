@@ -8,6 +8,7 @@ const VeiculosJson = require('./persistencia/VeiculosJson');
 const ClienteAvulso = require('./clientes/ClienteAvulso');
 const GerenciadorVagas = require('./estacionamento/GerenciadorVagas');
 const EstadoVagasJson = require('./persistencia/EstadoVagasJson');
+const RegistroEventos = require('./estacionamento/RegistroEventos');
 
 /**
   Fachada do sistema. Continua sem I/O interativo (console.log/leitura de
@@ -17,11 +18,16 @@ const EstadoVagasJson = require('./persistencia/EstadoVagasJson');
   usuário), por isso carregarTudo/salvarTudo vivem aqui.
 */
 class App {
-  constructor(configuracao = null) {
+  constructor(configuracao = null, opcoes = {}) {
     this.configuracao = configuracao;
     this.cadastroClientes = new CadastroClientes();
     this.gerenciadorVagas = configuracao ? new GerenciadorVagas(configuracao) : null;
-    this.registroDeEntradasESaidas = new RegistroDeEntradas_E_Saidas(this.cadastroClientes, this.gerenciadorVagas);
+    this.registroEventos = new RegistroEventos(opcoes.caminhoEventos ?? null);
+    this.registroDeEntradasESaidas = new RegistroDeEntradas_E_Saidas(
+      this.cadastroClientes,
+      this.gerenciadorVagas,
+      this.registroEventos
+    );
     this.relatoriosGerenciais = new RelatoriosGerenciais(
       this.cadastroClientes,
       this.registroDeEntradasESaidas
@@ -33,8 +39,8 @@ class App {
    * @returns {import('./estacionamento/TicketEstacionamento')}
    */
 
-  autorizarEntrada(placa) {
-    return this.registroDeEntradasESaidas.autorizarEntrada(placa);
+  autorizarEntrada(placa, opcoes) {
+    return this.registroDeEntradasESaidas.autorizarEntrada(placa, opcoes);
   }
 
   /**
@@ -117,6 +123,43 @@ class App {
     };
   }
 
+  consultarEventos(filtros) {
+    return this.registroEventos.consultar(filtros);
+  }
+
+  bloquearVaga(id, opcoes = {}) {
+    if (!this.gerenciadorVagas) throw new Error('gerenciador de vagas não configurado');
+    const vaga = this.gerenciadorVagas.buscarPorId(id);
+    if (!vaga) throw new Error(`vaga não encontrada: ${id}`);
+    if (vaga.status === 'ocupada') throw new Error('não é possível bloquear uma vaga ocupada');
+    if (vaga.status === 'bloqueada') throw new Error('vaga já está bloqueada');
+
+    this.registroEventos.registrar({
+      tipo: 'VAGA_BLOQUEADA',
+      resultado: 'bloqueada',
+      vagaId: vaga.id,
+      origem: opcoes.origem ?? 'manual',
+      detalhes: `Vaga ${vaga.id} bloqueada para manutenção/indisponibilidade.`,
+    });
+    return this.gerenciadorVagas.bloquear(id);
+  }
+
+  desbloquearVaga(id, opcoes = {}) {
+    if (!this.gerenciadorVagas) throw new Error('gerenciador de vagas não configurado');
+    const vaga = this.gerenciadorVagas.buscarPorId(id);
+    if (!vaga) throw new Error(`vaga não encontrada: ${id}`);
+    if (vaga.status !== 'bloqueada') throw new Error('vaga não está bloqueada');
+
+    this.registroEventos.registrar({
+      tipo: 'VAGA_DESBLOQUEADA',
+      resultado: 'livre',
+      vagaId: vaga.id,
+      origem: opcoes.origem ?? 'manual',
+      detalhes: `Vaga ${vaga.id} liberada para operação.`,
+    });
+    return this.gerenciadorVagas.desbloquear(id);
+  }
+
   /**
     Carrega clientes, tickets e bloqueios a partir dos 3 caminhos informados,
     nesta ordem (clientes precisa vir antes de tickets, pois a reconstrução do
@@ -125,6 +168,7 @@ class App {
    */
 
   carregarTudo(caminhos) {
+    if (caminhos.eventos) this.registroEventos.carregar(caminhos.eventos);
     ClientesCsv.carregar(caminhos.clientes, this.cadastroClientes);
     VeiculosJson.carregar(caminhos.veiculos, this.cadastroClientes);
     TicketsCsv.carregar(caminhos.tickets, this.registroDeEntradasESaidas);
