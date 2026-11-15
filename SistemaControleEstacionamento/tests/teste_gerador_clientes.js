@@ -140,7 +140,8 @@ function executar() {
     assert.ok(loteSemColisao.clientes.every((cliente) => cliente.documento !== '00000000001'));
     const todasPlacas = appColisao.listarClientes().flatMap((cliente) => Array.from(cliente.placas.keys()));
     assert.equal(new Set(todasPlacas).size, todasPlacas.length);
-    assert.ok(!todasPlacas.some((placa) => loteSemColisao.clientes.some((cliente) => cliente.veiculos.some((veiculo) => veiculo.placa === 'SIM0A00'))));
+    assert.equal(todasPlacas.filter((placa) => placa === 'SIM0A00').length, 1);
+    assert.ok(loteSemColisao.clientes.every((cliente) => cliente.veiculos.every((veiculo) => veiculo.placa !== 'SIM0A00')));
     console.log('✅ O gerador evita colisões com documentos e placas já cadastrados.');
 
     const totalEventosGeracao = app.consultarEventos({ tipo: 'CLIENTE_GERADO' }).total;
