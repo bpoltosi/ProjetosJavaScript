@@ -312,6 +312,19 @@
     ctx.lineTo(largura - 12, 30);
     ctx.stroke();
     ctx.setLineDash([]);
+
+    // Guarita e cancela em blocos pixelados; representam a entrada física do pátio.
+    ctx.fillStyle = '#526B59';
+    ctx.fillRect(91, 6, 18, 24);
+    ctx.fillStyle = '#A8C6A6';
+    ctx.fillRect(95, 9, 10, 8);
+    ctx.fillStyle = '#24352B';
+    ctx.fillRect(94, 19, 12, 7);
+    ctx.fillStyle = '#E6CE7E';
+    ctx.fillRect(111, 13, 23, 3);
+    ctx.fillStyle = '#B75E50';
+    ctx.fillRect(111, 10, 4, 9);
+    ctx.fillRect(130, 10, 4, 9);
   }
 
   function desenharVaga(ctx, vaga, caixa, selecionada, veiculo) {
@@ -395,7 +408,8 @@
       grupo.vagas.forEach((vaga, indice) => {
         const linha = Math.floor(indice / colunas);
         const coluna = indice % colunas;
-        const y = cursorY + linha * (slotH + espacamentoY);
+        const faixaCirculacao = Math.floor(linha / 2) * 18;
+        const y = cursorY + linha * (slotH + espacamentoY) + faixaCirculacao;
         const x = margem + coluna * (slotW + espacamentoX);
         caixas.push({
           vaga,
@@ -408,7 +422,8 @@
         });
       });
       const linhas = Math.ceil(grupo.vagas.length / colunas);
-      cursorY += linhas * (slotH + espacamentoY) + 18;
+      const faixasCirculacao = Math.floor(Math.max(0, linhas - 1) / 2);
+      cursorY += linhas * (slotH + espacamentoY) + faixasCirculacao * 18 + 18;
     });
 
     const altura = Math.max(260, cursorY + 20);
@@ -430,6 +445,27 @@
       ctx.strokeStyle = grupo.cor;
       ctx.lineWidth = 1;
       ctx.strokeRect(7, topo, largura - 14, fundo - topo);
+
+      const linhasGrupo = Array.from(new Set(caixasGrupo.map((caixa) => caixa.y))).sort((a, b) => a - b);
+      for (let indiceLinha = 1; indiceLinha < linhasGrupo.length; indiceLinha += 1) {
+        if (indiceLinha % 2 !== 0) continue;
+        const faixaY = Math.floor((linhasGrupo[indiceLinha - 1] + slotH + linhasGrupo[indiceLinha]) / 2);
+        ctx.fillStyle = '#34483E';
+        ctx.fillRect(10, faixaY - 5, largura - 20, 13);
+        ctx.strokeStyle = '#B2C69A';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([6, 7]);
+        ctx.beginPath();
+        ctx.moveTo(17, faixaY + 1);
+        ctx.lineTo(largura - 17, faixaY + 1);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#D9E5D0';
+        ctx.font = 'bold 6px "Lucida Console", monospace';
+        ctx.textAlign = 'right';
+        ctx.fillText('PISTA', largura - 22, faixaY - 7);
+      }
+
       ctx.fillStyle = grupo.cor;
       ctx.font = 'bold 9px "Lucida Console", monospace';
       ctx.textAlign = 'left';
