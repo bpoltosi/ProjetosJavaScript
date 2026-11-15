@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const vm = require('node:vm');
 const { criarServidor, criarCaminhos } = require('../server');
 
 async function executar() {
@@ -35,6 +36,7 @@ async function executar() {
     assert.match(html, /id="mapCategoryFilter"/);
     assert.match(html, /id="mapPrevPage"/);
     assert.match(html, /id="mapNextPage"/);
+    assert.match(html, /\/assets\/pixel-assets\.js/);
     assert.match(html, /\/styles\.css/);
     assert.match(html, /\/app\.js/);
     console.log('✅ Página principal entrega assistente de configuração e controles operacionais do painel.');
@@ -56,6 +58,7 @@ async function executar() {
     assert.equal(jsResposta.status, 200);
     assert.match(jsResposta.headers.get('content-type'), /javascript/);
     const javascript = await jsResposta.text();
+    assert.doesNotThrow(() => new vm.Script(javascript, { filename: 'public/app.js' }));
     for (const rota of [
       '/api/configuracao',
       '/api/estado',
@@ -84,8 +87,19 @@ async function executar() {
     assert.match(javascript, /selecionarVagaNoMapa/);
     assert.match(javascript, /micro-onibus/);
     assert.match(javascript, /mapPageSize: 80/);
+    assert.match(javascript, /ParkingPixelAssets/);
     assert.doesNotMatch(javascript, /react-dom|createRoot\(|new Phaser\./i);
-    console.log('✅ Frontend usa API HTTP e Canvas 2D com sprites, seleção por hitbox e paginação real de vagas.');
+    const assetsResposta = await fetch(`${baseUrl}/assets/pixel-assets.js`);
+    assert.equal(assetsResposta.status, 200);
+    assert.match(assetsResposta.headers.get('content-type'), /javascript/);
+    const assets = await assetsResposta.text();
+    assert.doesNotThrow(() => new vm.Script(assets, { filename: 'public/assets/pixel-assets.js' }));
+    for (const tipo of ['motocicleta', 'compacto', 'hatch', 'sedan', 'suv', 'picape', 'van', 'micro-onibus']) {
+      assert.ok(assets.includes(tipo), `asset pixel art deve incluir o tipo ${tipo}`);
+    }
+    assert.ok(assets.includes('asphaltDots'));
+    assert.ok(assets.includes('vehicleWindows'));
+    console.log('✅ Assets pixel art são servidos separadamente e contêm sprites e tiles originais.');
 
     const health = await fetch(`${baseUrl}/api/health`);
     const dadosHealth = await health.json();
