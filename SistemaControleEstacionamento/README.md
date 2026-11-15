@@ -53,16 +53,24 @@ interativo:
 - **Sair**: salva automaticamente antes de encerrar. O mesmo salvamento
   automático dispara em `Ctrl+C`/`SIGTERM`.
 
-### Arquivos de dados (`data/`)
+### Arquivos de dados e configuração
 
-| Arquivo | Formato por linha |
+A CLI e o servidor web usam o mesmo diretório de dados por padrão: `data/`.
+O arquivo de configuração fica em `config/estacionamento.json`.
+
+| Caminho | Conteúdo / persistência |
 |---|---|
-| `clientes.csv` | `documento,nome,campoEspecifico,tipo,placa1;placa2;...,dataVencimentoBoleto` (campoEspecifico = saldo do Estudante, saldoDevedor da Empresa, ou vazio para Professor; dataVencimentoBoleto só é relevante para Empresa — ISO 8601 ou vazio; coluna adicionada ao final para manter retrocompatibilidade com CSVs sem ela) |
-| `tickets.csv` | `placa,dataHoraEntrada,dataHoraSaida,custoOriginal,descontoId,valorDesconto,valorDevido,valorPago` (ticket ainda aberto: só placa e dataHoraEntrada preenchidos) |
-| `bloqueios.csv` | uma placa avulsa bloqueada por linha (regenerado por completo a cada salvamento) |
+| `config/estacionamento.json` | capacidade, nome, categorias de vagas, critérios de elegibilidade, tipos permitidos e perfis de clientes |
+| `data/clientes.csv` | `documento,nome,campoEspecifico,tipo,placas,dataVencimentoBoleto,credencialAcessibilidade`; o campo específico armazena saldo de Estudante, débito de Empresa ou vazio; boleto e credencial são compatíveis com arquivos antigos sem as colunas finais |
+| `data/tickets.csv` | tickets abertos e fechados: placa, entrada/saída, valores de cobrança/desconto e ID da vaga; tickets abertos não possuem campos de saída |
+| `data/bloqueios.csv` | uma placa avulsa bloqueada por linha |
+| `data/veiculos.json` | metadados de veículos (tipo, cor e dimensões), vinculados às placas cadastradas |
+| `data/estado-vagas.json` | versão do formato e IDs das vagas bloqueadas; ocupação é reconstruída a partir dos tickets abertos e seus IDs de vaga |
+| `data/eventos.jsonl` | histórico append-only: um objeto JSON por linha, com timestamp, tipo, placa, vaga, resultado, motivo e origem |
 
-Na primeira execução, se algum desses arquivos não existir, o sistema
-simplesmente começa com aquela estrutura vazia (não é tratado como erro).
+Na primeira execução, a ausência da configuração direciona o painel web ao assistente inicial.
+Arquivos de dados ausentes representam um estado vazio. Os dados só são criados/salvos nos
+caminhos configurados; os testes usam diretórios temporários próprios.
 
 ### Testes automatizados
 
