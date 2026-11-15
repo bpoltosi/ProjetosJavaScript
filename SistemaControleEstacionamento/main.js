@@ -34,7 +34,7 @@ const caminhos = {
   eventos: path.join(DIR_DADOS, 'eventos.jsonl'),
 };
 
-const CAMINHO_CONFIGURACAO = path.join(__dirname, 'config', 'estacionamento.json');
+const CAMINHO_CONFIGURACAO = process.env.ESTACIONAMENTO_CONFIG || path.join(__dirname, 'config', 'estacionamento.json');
 let configuracao = null;
 try {
   configuracao = ConfiguracaoJson.carregar(CAMINHO_CONFIGURACAO);
