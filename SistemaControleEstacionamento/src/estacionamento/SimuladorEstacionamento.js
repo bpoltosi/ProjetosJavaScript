@@ -127,7 +127,11 @@ class SimuladorEstacionamento {
     const faltantes = Math.max(0, quantidade - existentes);
     if (faltantes === 0) return;
 
-    const resultado = this.app.gerarClientes({
+    const randomAnterior = this.app.geradorClientes.random;
+    this.app.geradorClientes.random = this.random;
+    let resultado;
+    try {
+      resultado = this.app.gerarClientes({
       quantidade: faltantes,
       ...(this.opcoes.categoriaId ? { categoriaId: this.opcoes.categoriaId } : {}),
       ...(this.opcoes.pesosCategorias ? { pesosCategorias: this.opcoes.pesosCategorias } : {}),
@@ -135,8 +139,11 @@ class SimuladorEstacionamento {
       pesosTipos: this.opcoes.pesosTipos,
       coresVeiculo: this.opcoes.coresVeiculo,
       probabilidadeAcessibilidade: this.opcoes.probabilidadeAcessibilidade,
-      origem: 'simulacao',
-    });
+        origem: 'simulacao',
+      });
+    } finally {
+      this.app.geradorClientes.random = randomAnterior;
+    }
 
     for (const cliente of resultado.clientes) {
       this.estatisticas.clientesGerados += 1;
@@ -176,7 +183,7 @@ class SimuladorEstacionamento {
       'SIMULACAO_INICIADA',
       'executando',
       `Simulação iniciada a ${this.velocidade}x com ${this.frota.length} veículo(s) na frota.`,
-      { detalhes: `Intervalo entre chegadas: ${this.intervaloChegadaMs} ms.` }
+      { detalhes: `Intervalo entre chegadas: ${this.intervaloChegadaMs} ms; permanência: ${this.permanenciaMinMs}–${this.permanenciaMaxMs} ms.` }
     );
     this._agendarProximoCiclo();
     return this.obterEstado();
@@ -199,6 +206,7 @@ class SimuladorEstacionamento {
   }
 
   definirVelocidade(velocidade) {
+    if (this.estado === 'parado') throw new Error('inicie a simulação antes de alterar sua velocidade');
     if (!VELOCIDADES_VALIDAS.includes(velocidade)) {
       throw new Error('velocidade deve ser 1, 2 ou 5');
     }
@@ -311,7 +319,7 @@ class SimuladorEstacionamento {
       } catch (erro) {
         this.ultimoErro = erro.message;
         this._registrarEvento('SIMULACAO_SAIDA_NEGADA', 'negado', erro.message, { placa });
-        this.veiculosAtivos.delete(placa);
+        dados.saiEm = agora + Math.max(100, Math.round(this.intervaloChegadaMs / this.velocidade));
       } finally {
         this.veiculosEmProcessamento.delete(placa);
       }
