@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const os = require('os');
 const CadastroClientes = require('../src/clientes/CadastroClientes');
 const ClientesCsv = require('../src/persistencia/ClientesCsv');
 const Empresa = require('../src/clientes/Empresa');
