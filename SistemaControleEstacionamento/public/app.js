@@ -15,6 +15,11 @@
     eventos: [],
     simulacao: null,
     todosOsEspacos: false,
+    mapPage: 0,
+    mapPageSize: 80,
+    mapVisibleSlots: [],
+    mapHitBoxes: [],
+    selectedSlotId: null,
     ultimaFalhaConexao: false,
     polling: null,
     ultimaAtualizacao: null,
@@ -214,6 +219,400 @@
     definirTexto('eventCount', String(dados.eventosRegistrados || 0));
   }
 
+
+  const SPRITES = {
+    motocicleta: [
+      '00300',
+      '01310',
+      '11311',
+      '01310',
+      '01310',
+      '01310',
+      '11311',
+      '01310',
+      '00300',
+    ],
+    compacto: [
+      '0033300',
+      '0133310',
+      '1133331',
+      '1132231',
+      '1132231',
+      '1133331',
+      '1133331',
+      '1132231',
+      '1133331',
+      '0133310',
+      '0033300',
+    ],
+    hatch: [
+      '0033300',
+      '0133310',
+      '1133331',
+      '1122231',
+      '1132231',
+      '1133331',
+      '1133331',
+      '1132231',
+      '1133331',
+      '0133310',
+      '0033300',
+    ],
+    sedan: [
+      '0033300',
+      '0133310',
+      '1133331',
+      '1132231',
+      '1122221',
+      '1133331',
+      '1133331',
+      '1132231',
+      '1132231',
+      '1133331',
+      '0133310',
+      '0033300',
+      '0033300',
+    ],
+    suv: [
+      '0133310',
+      '1133331',
+      '1133331',
+      '1122221',
+      '1122221',
+      '1133331',
+      '1133331',
+      '1133331',
+      '1122221',
+      '1122221',
+      '1133331',
+      '0133310',
+      '0033300',
+    ],
+    picape: [
+      '0133310',
+      '1133331',
+      '1133331',
+      '1122221',
+      '1122221',
+      '1133331',
+      '1144441',
+      '1144441',
+      '1144441',
+      '1133331',
+      '1122221',
+      '0133310',
+      '0033300',
+    ],
+    van: [
+      '0133310',
+      '1133331',
+      '1133331',
+      '1122221',
+      '1122221',
+      '1122221',
+      '1122221',
+      '1133331',
+      '1133331',
+      '1122221',
+      '1122221',
+      '1133331',
+      '0133310',
+    ],
+    'micro-onibus': [
+      '0133310',
+      '1133331',
+      '1133331',
+      '1122221',
+      '1122221',
+      '1122221',
+      '1122221',
+      '1122221',
+      '1122221',
+      '1133331',
+      '1133331',
+      '1122221',
+      '1122221',
+      '0133310',
+      '0033300',
+    ],
+  };
+
+  function corParaPixel(cor, fallback = '#A7ADB4') {
+    return typeof cor === 'string' && /^#[0-9a-fA-F]{6}$/.test(cor) ? cor : fallback;
+  }
+
+  function desenharSprite(ctx, veiculo, x, y, larguraMaxima, alturaMaxima) {
+    const tipo = veiculo?.tipoVeiculo || 'sedan';
+    const sprite = SPRITES[tipo] || SPRITES.sedan;
+    const colunas = Math.max(...sprite.map((linha) => linha.length));
+    const linhas = sprite.length;
+    const pixel = Math.max(1, Math.floor(Math.min(2, larguraMaxima / colunas, alturaMaxima / linhas)));
+    const largura = colunas * pixel;
+    const altura = linhas * pixel;
+    const inicioX = Math.floor(x - largura / 2);
+    const inicioY = Math.floor(y - altura / 2);
+    const body = corParaPixel(veiculo?.corVeiculo || veiculo?.cor, '#A7ADB4');
+
+    for (let linha = 0; linha < sprite.length; linha += 1) {
+      for (let coluna = 0; coluna < sprite[linha].length; coluna += 1) {
+        const caractere = sprite[linha][coluna];
+        if (caractere === '0') continue;
+        if (caractere === '1') ctx.fillStyle = body;
+        else if (caractere === '2') ctx.fillStyle = '#9DD3DE';
+        else if (caractere === '3') ctx.fillStyle = '#111A18';
+        else if (caractere === '4') ctx.fillStyle = '#F5D77B';
+        else ctx.fillStyle = body;
+        ctx.fillRect(inicioX + coluna * pixel, inicioY + linha * pixel, pixel, pixel);
+      }
+    }
+  }
+
+  function agruparVagasPorCategoria(vagas) {
+    const grupos = new Map();
+    vagas.forEach((vaga) => {
+      const id = vaga.categoriaId || 'geral';
+      if (!grupos.has(id)) grupos.set(id, []);
+      grupos.get(id).push(vaga);
+    });
+    return Array.from(grupos.entries()).map(([id, itens]) => ({
+      id,
+      nome: itens[0]?.categoriaNome || id,
+      cor: corParaPixel(itens[0]?.cor, '#65A878'),
+      vagas: itens,
+    }));
+  }
+
+  function vagasDoMapa() {
+    const categoria = $('#mapCategoryFilter')?.value || '';
+    return state.vagas
+      .filter((vaga) => !categoria || vaga.categoriaId === categoria)
+      .slice()
+      .sort((a, b) => String(a.categoriaId).localeCompare(String(b.categoriaId)) ||
+        String(a.id).localeCompare(String(b.id), undefined, { numeric: true }));
+  }
+
+  function desenharFundoMapa(ctx, largura, altura) {
+    ctx.fillStyle = '#26372F';
+    ctx.fillRect(0, 0, largura, altura);
+    for (let y = 40; y < altura; y += 24) {
+      for (let x = 8; x < largura; x += 28) {
+        if (((x / 28 + y / 24) % 3) === 0) {
+          ctx.fillStyle = '#2B3D34';
+          ctx.fillRect(x, y, 2, 2);
+        }
+      }
+    }
+
+    ctx.fillStyle = '#17251F';
+    ctx.fillRect(0, 0, largura, 36);
+    ctx.fillStyle = '#AFCB9A';
+    ctx.font = 'bold 9px "Lucida Console", monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('ENTRADA ▶', 12, 22);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#D8E4CF';
+    ctx.fillText('PISTA DE CIRCULAÇÃO', largura / 2, 22);
+    ctx.textAlign = 'right';
+    ctx.fillText('SAÍDA ▶', largura - 12, 22);
+
+    ctx.strokeStyle = '#E4D28A';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([8, 7]);
+    ctx.beginPath();
+    ctx.moveTo(12, 30);
+    ctx.lineTo(largura - 12, 30);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  function desenharVaga(ctx, vaga, caixa, selecionada, veiculo) {
+    const status = vaga.status || 'livre';
+    const cores = status === 'ocupada'
+      ? { fundo: '#23485A', borda: '#87B8C9', texto: '#E1F2F2' }
+      : status === 'bloqueada'
+        ? { fundo: '#553432', borda: '#D17A70', texto: '#FFE0D9' }
+        : { fundo: '#294A35', borda: '#83B77D', texto: '#DCF0C8' };
+
+    ctx.fillStyle = '#14221C';
+    ctx.fillRect(caixa.x + 2, caixa.y + 3, caixa.w, caixa.h);
+    ctx.fillStyle = cores.fundo;
+    ctx.fillRect(caixa.x, caixa.y, caixa.w, caixa.h);
+    ctx.strokeStyle = selecionada ? '#F4D273' : cores.borda;
+    ctx.lineWidth = selecionada ? 3 : 2;
+    ctx.strokeRect(caixa.x + 1, caixa.y + 1, caixa.w - 2, caixa.h - 2);
+
+    ctx.fillStyle = cores.texto;
+    ctx.font = 'bold 7px "Lucida Console", monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(vaga.id, caixa.x + 4, caixa.y + 9, caixa.w - 8);
+
+    if (status === 'ocupada') {
+      desenharSprite(ctx, veiculo || {
+        tipoVeiculo: 'sedan',
+        corVeiculo: '#A7ADB4',
+      }, caixa.x + caixa.w / 2, caixa.y + caixa.h / 2 + 3, caixa.w - 12, caixa.h - 20);
+      ctx.fillStyle = '#E8F2F0';
+      ctx.font = 'bold 6px "Lucida Console", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(vaga.placa || 'OCUPADA', caixa.x + caixa.w / 2, caixa.y + caixa.h - 4, caixa.w - 4);
+    } else if (status === 'bloqueada') {
+      ctx.strokeStyle = '#F3A39B';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(caixa.x + 9, caixa.y + 19);
+      ctx.lineTo(caixa.x + caixa.w - 9, caixa.y + caixa.h - 8);
+      ctx.moveTo(caixa.x + caixa.w - 9, caixa.y + 19);
+      ctx.lineTo(caixa.x + 9, caixa.y + caixa.h - 8);
+      ctx.stroke();
+      ctx.fillStyle = cores.texto;
+      ctx.font = 'bold 6px "Lucida Console", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('BLOQUEADA', caixa.x + caixa.w / 2, caixa.y + caixa.h - 4, caixa.w - 4);
+    } else {
+      ctx.fillStyle = '#A8D190';
+      ctx.fillRect(caixa.x + caixa.w / 2 - 2, caixa.y + 22, 4, 4);
+      ctx.fillStyle = cores.texto;
+      ctx.font = 'bold 6px "Lucida Console", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('LIVRE', caixa.x + caixa.w / 2, caixa.y + caixa.h - 5);
+    }
+  }
+
+  function desenharMapa() {
+    const canvas = $('#parkingCanvas');
+    const shell = $('#canvasShell');
+    if (!canvas || !shell) return;
+
+    const largura = Math.max(300, Math.floor(shell.clientWidth - 4));
+    const filtro = $('#mapCategoryFilter')?.value || '';
+    const filtradas = vagasDoMapa();
+    const paginas = Math.max(1, Math.ceil(filtradas.length / state.mapPageSize));
+    state.mapPage = Math.min(state.mapPage, paginas - 1);
+    const inicio = state.mapPage * state.mapPageSize;
+    const visiveis = filtradas.slice(inicio, inicio + state.mapPageSize);
+    state.mapVisibleSlots = visiveis;
+
+    const grupos = agruparVagasPorCategoria(visiveis);
+    const margem = 14;
+    const colunas = Math.max(3, Math.min(8, Math.floor((largura - 44) / 88)));
+    const espacamentoX = 9;
+    const espacamentoY = 8;
+    const slotW = Math.max(28, Math.floor((largura - margem * 2 - espacamentoX * (colunas - 1)) / colunas));
+    const slotH = 58;
+    let cursorY = 51;
+    const caixas = [];
+
+    grupos.forEach((grupo) => {
+      cursorY += 8;
+      const topoGrupo = cursorY;
+      cursorY += 19;
+      grupo.vagas.forEach((vaga, indice) => {
+        const linha = Math.floor(indice / colunas);
+        const coluna = indice % colunas;
+        const y = cursorY + linha * (slotH + espacamentoY);
+        const x = margem + coluna * (slotW + espacamentoX);
+        caixas.push({
+          vaga,
+          x,
+          y,
+          w: slotW,
+          h: slotH,
+          topoGrupo,
+          grupoId: grupo.id,
+        });
+      });
+      const linhas = Math.ceil(grupo.vagas.length / colunas);
+      cursorY += linhas * (slotH + espacamentoY) + 18;
+    });
+
+    const altura = Math.max(260, cursorY + 20);
+    canvas.width = largura;
+    canvas.height = altura;
+    canvas.style.height = \`\${altura}px\`;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.imageSmoothingEnabled = false;
+    desenharFundoMapa(ctx, largura, altura);
+
+    grupos.forEach((grupo) => {
+      const caixasGrupo = caixas.filter((caixa) => caixa.grupoId === grupo.id);
+      if (!caixasGrupo.length) return;
+      const topo = Math.min(...caixasGrupo.map((caixa) => caixa.y)) - 15;
+      const fundo = Math.max(...caixasGrupo.map((caixa) => caixa.y + caixa.h)) + 7;
+      ctx.fillStyle = '#1C2A23';
+      ctx.fillRect(7, topo, largura - 14, fundo - topo);
+      ctx.strokeStyle = grupo.cor;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(7, topo, largura - 14, fundo - topo);
+      ctx.fillStyle = grupo.cor;
+      ctx.font = 'bold 9px "Lucida Console", monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(\`SETOR \${grupo.nome.toUpperCase()} · \${grupo.vagas.length} VAGA(S)\`, 13, topo - 4);
+    });
+
+    const veiculosPorPlaca = new Map(state.veiculos.map((veiculo) => [veiculo.placa, veiculo]));
+    state.mapHitBoxes = caixas;
+    caixas.forEach((caixa) => {
+      const selecionada = state.selectedSlotId === caixa.vaga.id;
+      const veiculo = caixa.vaga.placa ? veiculosPorPlaca.get(caixa.vaga.placa) : null;
+      desenharVaga(ctx, caixa.vaga, caixa, selecionada, veiculo);
+    });
+
+    ctx.fillStyle = '#D8E6D1';
+    ctx.font = 'bold 8px "Lucida Console", monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(\`PÁGINA \${state.mapPage + 1}/\${paginas}\`, largura - 13, altura - 7);
+
+    definirTexto('mapPageLabel', \`PÁGINA \${state.mapPage + 1} / \${paginas} · \${filtradas.length} VAGAS\`);
+    $('#mapPrevPage').disabled = state.mapPage <= 0;
+    $('#mapNextPage').disabled = state.mapPage >= paginas - 1;
+    definirTexto('mapCaption', filtro
+      ? \`Setor filtrado: \${filtro}. Clique numa vaga para ver seu estado e seus dados.\`
+      : 'Mapa top-down ortográfico. Cada marcação corresponde a uma vaga real da API; clique para ver detalhes.');
+  }
+
+  function preencherFiltroMapa(configuracao) {
+    const select = $('#mapCategoryFilter');
+    if (!select) return;
+    const atual = select.value;
+    select.replaceChildren();
+    const todas = document.createElement('option');
+    todas.value = '';
+    todas.textContent = 'TODAS';
+    select.append(todas);
+    (configuracao?.categorias || []).forEach((categoria) => {
+      const option = document.createElement('option');
+      option.value = categoria.id;
+      option.textContent = categoria.nome;
+      select.append(option);
+    });
+    if (Array.from(select.options).some((option) => option.value === atual)) select.value = atual;
+  }
+
+  function selecionarVagaNoMapa(evento) {
+    const canvas = $('#parkingCanvas');
+    const limites = canvas.getBoundingClientRect();
+    const x = (evento.clientX - limites.left) * (canvas.width / limites.width);
+    const y = (evento.clientY - limites.top) * (canvas.height / limites.height);
+    const caixa = state.mapHitBoxes.find((item) =>
+      x >= item.x && x <= item.x + item.w && y >= item.y && y <= item.y + item.h
+    );
+    if (!caixa) return;
+    const vaga = caixa.vaga;
+    state.selectedSlotId = vaga.id;
+    if (vaga.status === 'ocupada' && vaga.placa) {
+      $('#exitVehicle').value = vaga.placa;
+      atualizarCampoRecusa();
+      renderizarDetalhes(vaga.placa);
+    } else {
+      $('#exitVehicle').value = '';
+      atualizarCampoRecusa();
+      renderizarDetalhesVaga(vaga);
+    }
+    desenharMapa();
+  }
+
+
   function criarVaga(vaga) {
     const elemento = document.createElement('div');
     const status = vaga.status || 'livre';
@@ -245,6 +644,19 @@
     );
     $('#showAllVacanciesButton').textContent = state.todosOsEspacos ? 'MOSTRAR MENOS' : 'VER TODAS';
     $('#showAllVacanciesButton').disabled = vagas.length <= 48;
+    preencherFiltroMapa(state.configuracao);
+    desenharMapa();
+
+    if (state.selectedSlotId) {
+      const vagaSelecionada = state.vagas.find((vaga) => vaga.id === state.selectedSlotId);
+      if (vagaSelecionada?.status === 'ocupada' && vagaSelecionada.placa) {
+        renderizarDetalhes(vagaSelecionada.placa);
+      } else if (vagaSelecionada) {
+        renderizarDetalhesVaga(vagaSelecionada);
+      } else {
+        state.selectedSlotId = null;
+      }
+    }
   }
 
   function formatarData(valor) {
@@ -308,11 +720,13 @@
     if (!veiculo) {
       const vazio = document.createElement('p');
       vazio.className = 'empty-state';
-      vazio.textContent = 'Selecione um veículo estacionado para ver seus detalhes.';
+      vazio.textContent = 'Selecione um veículo estacionado ou uma vaga no mapa.';
       destino.append(vazio);
       return;
     }
 
+    const vaga = state.vagas.find((item) => item.id === veiculo.vagaId);
+    state.selectedSlotId = vaga?.id ?? state.selectedSlotId;
     const cliente = state.clientes.find((item) =>
       item.veiculos?.some((veiculoCliente) => veiculoCliente.placa === placa)
     );
@@ -327,6 +741,22 @@
       criarDetalhe('Vaga', veiculo.vagaId),
       criarDetalhe('Entrada', formatarData(veiculo.dataHoraEntrada)),
       criarDetalhe('Credencial acessível', cliente?.possuiCredencialAcessibilidade ? 'SIM' : 'NÃO')
+    );
+    destino.append(detalhes);
+  }
+
+  function renderizarDetalhesVaga(vaga) {
+    const destino = $('#selectedVehicleDetails');
+    destino.replaceChildren();
+    const detalhes = document.createElement('div');
+    detalhes.className = 'details-list';
+    detalhes.append(
+      criarDetalhe('Identificador', vaga.id),
+      criarDetalhe('Estado', String(vaga.status).toUpperCase()),
+      criarDetalhe('Categoria', vaga.categoriaNome || vaga.categoriaId),
+      criarDetalhe('Cor do setor', vaga.cor || '#A7ADB4', vaga.cor),
+      criarDetalhe('Veículo', vaga.placa || 'Nenhum'),
+      criarDetalhe('Tipo', vaga.tipoVeiculo || '—')
     );
     destino.append(detalhes);
   }
@@ -496,7 +926,40 @@
       if (resposta) $('#entryPlate').value = '';
     });
 
-    $('#exitVehicle').addEventListener('change', atualizarCampoRecusa);
+    $('#exitVehicle').addEventListener('change', () => {
+      atualizarCampoRecusa();
+      state.selectedSlotId = state.vagas.find((vaga) => vaga.placa === $('#exitVehicle').value)?.id ?? null;
+      if ($('#exitVehicle').value) renderizarDetalhes($('#exitVehicle').value);
+      else renderizarDetalhes('');
+      desenharMapa();
+    });
+    $('#mapCategoryFilter').addEventListener('change', () => {
+      state.mapPage = 0;
+      desenharMapa();
+    });
+    $('#mapPrevPage').addEventListener('click', () => {
+      state.mapPage = Math.max(0, state.mapPage - 1);
+      desenharMapa();
+    });
+    $('#mapNextPage').addEventListener('click', () => {
+      state.mapPage += 1;
+      desenharMapa();
+    });
+    $('#parkingCanvas').addEventListener('click', selecionarVagaNoMapa);
+    $('#parkingCanvas').addEventListener('mousemove', (evento) => {
+      const canvas = $('#parkingCanvas');
+      const limites = canvas.getBoundingClientRect();
+      const x = (evento.clientX - limites.left) * (canvas.width / limites.width);
+      const y = (evento.clientY - limites.top) * (canvas.height / limites.height);
+      const caixa = state.mapHitBoxes.find((item) =>
+        x >= item.x && x <= item.x + item.w && y >= item.y && y <= item.y + item.h
+      );
+      canvas.style.cursor = caixa ? 'pointer' : 'crosshair';
+      canvas.title = caixa
+        ? `${caixa.vaga.id} · ${caixa.vaga.status}${caixa.vaga.placa ? ` · ${caixa.vaga.placa}` : ''}`
+        : 'Mapa top-down do estacionamento';
+    });
+    window.addEventListener('resize', () => window.requestAnimationFrame(desenharMapa));
     $('#exitForm').addEventListener('submit', async (evento) => {
       evento.preventDefault();
       const placa = $('#exitVehicle').value;
