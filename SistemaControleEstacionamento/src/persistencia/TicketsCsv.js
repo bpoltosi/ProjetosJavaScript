@@ -64,12 +64,13 @@ function carregar(caminho, registro) {
       valorDescontoStr,
       valorDevidoStr,
       valorPagoStr,
+      vagaIdStr,
     ] = linha;
 
     const dataHoraEntrada = paraData(dataHoraEntradaStr);
     const dataHoraSaida = paraData(dataHoraSaidaStr);
 
-    const ticket = new TicketEstacionamento(placa, dataHoraEntrada);
+    const ticket = new TicketEstacionamento(placa, dataHoraEntrada, vagaIdStr || null);
 
     if (dataHoraSaida === null) {
       registro.ticketsAbertos.set(placa, ticket);
@@ -124,7 +125,7 @@ function reconstruirEstadoDerivado(cadastroClientes, registro) {
 function salvar(caminho, registro) {
   const linhas = registro.todosOsTickets().map((ticket) => {
     if (ticket.estaAberto()) {
-      return [ticket.placa, ticket.dataHoraEntrada.toISOString(), '', '', '', '', '', ''];
+      return [ticket.placa, ticket.dataHoraEntrada.toISOString(), '', '', '', '', '', '', ticket.vagaId ?? ''];
     }
     return [
       ticket.placa,
@@ -135,6 +136,7 @@ function salvar(caminho, registro) {
       ticket.valorDesconto,
       ticket.valorDevido,
       ticket.valorPago,
+      ticket.vagaId ?? '',
     ];
   });
 

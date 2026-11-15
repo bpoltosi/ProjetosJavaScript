@@ -8,9 +8,11 @@ class TicketEstacionamento {
    * @param {string} placa
    * @param {Date} dataHoraEntrada
   */
-  constructor(placa, dataHoraEntrada) {
+  constructor(placa, dataHoraEntrada, vagaId = null) {
     /** @type {string} */
     this.placa = placa;
+    /** @type {string|null} Identificador estável da vaga alocada. */
+    this.vagaId = vagaId;
     /** @type {Date} */
     this.dataHoraEntrada = dataHoraEntrada;
     /** @type {Date|null} */

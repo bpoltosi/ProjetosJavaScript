@@ -92,6 +92,17 @@ class ConfiguracaoEstacionamento {
         `requerAcessibilidade da categoria ${id} deve ser booleano`
       );
 
+      const dimensoesMaximas = categoria.dimensoesMaximas ?? null;
+      exigir(
+        dimensoesMaximas === null ||
+        (dimensoesMaximas && typeof dimensoesMaximas === 'object' && !Array.isArray(dimensoesMaximas) &&
+          Number.isFinite(dimensoesMaximas.comprimentoMetros) &&
+          dimensoesMaximas.comprimentoMetros > 0 && dimensoesMaximas.comprimentoMetros <= 30 &&
+          Number.isFinite(dimensoesMaximas.larguraMetros) &&
+          dimensoesMaximas.larguraMetros > 0 && dimensoesMaximas.larguraMetros <= 5),
+        `dimensoesMaximas da categoria ${id} deve conter comprimentoMetros e larguraMetros válidos`
+      );
+
       const tiposVeiculoPermitidos = categoria.tiposVeiculoPermitidos ?? TIPOS_VEICULO;
       exigir(
         Array.isArray(tiposVeiculoPermitidos) &&
@@ -114,6 +125,7 @@ class ConfiguracaoEstacionamento {
           requerAcessibilidade: criterios.requerAcessibilidade ?? false,
         },
         tiposVeiculoPermitidos: [...tiposVeiculoPermitidos],
+        dimensoesMaximas: dimensoesMaximas ? { ...dimensoesMaximas } : null,
       };
     });
 
@@ -162,6 +174,7 @@ class ConfiguracaoEstacionamento {
           categoriasCliente: [...categoria.criteriosElegibilidade.categoriasCliente],
         },
         tiposVeiculoPermitidos: [...categoria.tiposVeiculoPermitidos],
+        dimensoesMaximas: categoria.dimensoesMaximas ? { ...categoria.dimensoesMaximas } : null,
       })),
     };
   }
