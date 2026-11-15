@@ -10,6 +10,8 @@ const GerenciadorVagas = require('./estacionamento/GerenciadorVagas');
 const EstadoVagasJson = require('./persistencia/EstadoVagasJson');
 const RegistroEventos = require('./estacionamento/RegistroEventos');
 const GeradorClientes = require('./estacionamento/GeradorClientes');
+const Estudante = require('./clientes/Estudante');
+const Empresa = require('./clientes/Empresa');
 
 /**
   Fachada do sistema. Continua sem I/O interativo (console.log/leitura de
@@ -131,6 +133,129 @@ class App {
 
   consultarEventos(filtros) {
     return this.registroEventos.consultar(filtros);
+  }
+
+  carregarSaldo(documento, valor, opcoes = {}) {
+    const cliente = this.buscarClientePorDocumento(documento);
+    if (!(cliente instanceof Estudante)) {
+      throw new Error('somente clientes estudantes possuem saldo pré-pago');
+    }
+    if (!Number.isFinite(valor) || valor <= 0) {
+      throw new Error('valor da recarga deve ser um número positivo');
+    }
+
+    const saldoAnterior = cliente.saldo;
+    const saldoNovo = saldoAnterior + valor;
+    const eventos = [{
+      tipo: 'SALDO_CARREGADO',
+      resultado: 'concluido',
+      categoriaCliente: cliente.categoriaId,
+      origem: opcoes.origem ?? 'manual',
+      detalhes: `Recarga de ${valor.toFixed(2)}. Saldo anterior: ${saldoAnterior.toFixed(2)}; novo saldo: ${saldoNovo.toFixed(2)}.`,
+    }];
+    if (saldoAnterior < 0 && saldoNovo >= 0) {
+      eventos.push({
+        tipo: 'CLIENTE_DESBLOQUEADO',
+        resultado: 'liberado',
+        categoriaCliente: cliente.categoriaId,
+        origem: opcoes.origem ?? 'manual',
+        detalhes: `Saldo regularizado após recarga. Documento: ${cliente.documento}.`,
+      });
+    }
+
+    this.registroEventos.registrarVarios(eventos);
+    cliente.carregarSaldo(valor);
+    return { documento: cliente.documento, saldoAnterior, valorCarregado: valor, saldoAtual: cliente.saldo, bloqueado: cliente.saldo < 0 };
+  }
+
+  emitirBoleto(documento, dataVencimento, opcoes = {}) {
+    const cliente = this.buscarClientePorDocumento(documento);
+    if (!(cliente instanceof Empresa)) {
+      throw new Error('somente clientes do tipo empresa possuem cobrança por boleto');
+    }
+    if (!(dataVencimento instanceof Date) || Number.isNaN(dataVencimento.getTime())) {
+      throw new Error('data de vencimento do boleto inválida');
+    }
+    if (cliente.saldoDevedor <= 0) {
+      throw new Error('não existe débito pendente para emitir boleto');
+    }
+    if (cliente.dataVencimentoBoleto !== null) {
+      throw new Error('já existe um boleto pendente para esta empresa');
+    }
+
+    const evento = {
+      tipo: 'BOLETO_EMITIDO',
+      resultado: 'emitido',
+      categoriaCliente: cliente.categoriaId,
+      origem: opcoes.origem ?? 'manual',
+      detalhes: `Boleto de ${cliente.saldoDevedor.toFixed(2)} emitido para ${dataVencimento.toISOString()}.`,
+    };
+    this.registroEventos.registrar(evento);
+    cliente.emitirBoleto(dataVencimento);
+    return {
+      documento: cliente.documento,
+      saldoDevedor: cliente.saldoDevedor,
+      dataVencimentoBoleto: cliente.dataVencimentoBoleto.toISOString(),
+      inadimplente: cliente.inadimplente,
+    };
+  }
+
+  quitarBoleto(documento, opcoes = {}) {
+    const cliente = this.buscarClientePorDocumento(documento);
+    if (!(cliente instanceof Empresa)) {
+      throw new Error('somente clientes do tipo empresa possuem boleto');
+    }
+    if (cliente.dataVencimentoBoleto === null || cliente.saldoDevedor <= 0) {
+      throw new Error('não existe boleto pendente para quitar');
+    }
+
+    const saldoQuitado = cliente.saldoDevedor;
+    const estavaInadimplente = cliente.inadimplente;
+    const eventos = [{
+      tipo: 'BOLETO_QUITADO',
+      resultado: 'quitado',
+      categoriaCliente: cliente.categoriaId,
+      origem: opcoes.origem ?? 'manual',
+      detalhes: `Boleto de ${saldoQuitado.toFixed(2)} quitado. Documento: ${cliente.documento}.`,
+    }];
+    if (estavaInadimplente) {
+      eventos.push({
+        tipo: 'CLIENTE_DESBLOQUEADO',
+        resultado: 'liberado',
+        categoriaCliente: cliente.categoriaId,
+        origem: opcoes.origem ?? 'manual',
+        detalhes: `Empresa regularizou o boleto e foi desbloqueada. Documento: ${cliente.documento}.`,
+      });
+    }
+
+    this.registroEventos.registrarVarios(eventos);
+    cliente.quitarBoleto();
+    return {
+      documento: cliente.documento,
+      valorQuitado: saldoQuitado,
+      saldoDevedor: cliente.saldoDevedor,
+      inadimplente: cliente.inadimplente,
+      dataVencimentoBoleto: cliente.dataVencimentoBoleto,
+    };
+  }
+
+  desbloquearPlaca(placa, opcoes = {}) {
+    if (typeof placa !== 'string' || placa.trim() === '') {
+      throw new Error('placa deve ser informada');
+    }
+    const placaNormalizada = placa.trim().toUpperCase();
+    if (!this.registroDeEntradasESaidas.placasBloqueadas.has(placaNormalizada)) {
+      throw new Error(`placa ${placaNormalizada} não está bloqueada`);
+    }
+    this.registroEventos.registrar({
+      tipo: 'PLACA_DESBLOQUEADA',
+      resultado: 'liberada',
+      placa: placaNormalizada,
+      origem: opcoes.origem ?? 'manual',
+      detalhes: `Placa ${placaNormalizada} desbloqueada após regularização do pagamento.`,
+    });
+    this.registroDeEntradasESaidas.placasBloqueadas.delete(placaNormalizada);
+    return { placa: placaNormalizada, bloqueada: false };
   }
 
   bloquearVaga(id, opcoes = {}) {
