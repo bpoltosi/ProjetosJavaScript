@@ -172,6 +172,7 @@ class RegistroDeEntradas_E_Saidas {
         this._registrarNegacao({
           ...this._contextoEvento(placa, clienteContexto, veiculoContexto, null, origem, {
             resultado: 'negado',
+            timestamp: opcoes.timestamp ?? null,
             motivo: erro.message,
             detalhes: 'Tentativa de entrada recusada pelo backend.',
           }),
@@ -196,6 +197,7 @@ class RegistroDeEntradas_E_Saidas {
       this._registrarNegacao({
         ...this._contextoEvento(placa, clienteContexto, veiculo, null, origem, {
           resultado: 'negado',
+          timestamp: opcoes.timestamp ?? null,
           motivo: erro.message,
           detalhes: 'Tentativa de saída recusada: não existe ticket aberto para a placa.',
         }),
@@ -215,6 +217,7 @@ class RegistroDeEntradas_E_Saidas {
           this.gerenciadorVagas?.buscarPorPlaca(placa) ?? null,
           origem, {
             resultado: 'negado',
+            timestamp: opcoes.timestamp ?? null,
             motivo: erro.message,
             detalhes: 'Saída mantida em aberto porque clientes cadastrados não pagam na cancela.',
           }),
