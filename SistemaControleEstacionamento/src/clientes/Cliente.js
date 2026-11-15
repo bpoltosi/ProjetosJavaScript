@@ -27,6 +27,13 @@ class Cliente {
     this.placas = new Map();
   }
 
+  definirCredencialAcessibilidade(possuiCredencial) {
+    if (typeof possuiCredencial !== 'boolean') {
+      throw new Error('credencial de acessibilidade deve ser um valor booleano');
+    }
+    this.possuiCredencialAcessibilidade = possuiCredencial;
+  }
+
   /**
       Adiciona uma placa respeitando o limite do subtipo.
       Retorna a placa normalizada (chave usada internamente em `placas`),
