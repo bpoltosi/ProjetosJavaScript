@@ -15,8 +15,8 @@ class ClienteAvulso extends Cliente {
    * @param {string} placa (identificador real do avulso)
    */
   constructor(placa) {
-    super(null, null);
-    const veiculo = new Veiculo(placa);
+    super(null, null, { categoriaId: 'avulso' });
+    const veiculo = new Veiculo(placa, caracteristicas);
     /** @type {string} */
     this.placa = veiculo.placa;
     this.placas.set(veiculo.placa, veiculo);
@@ -27,7 +27,7 @@ class ClienteAvulso extends Cliente {
    * @returns {string}
    */
 
-  adicionarPlaca(placa) {
+  adicionarPlaca(placa, caracteristicas) {
     if (this.placas.size >= 1) {
       throw new Error('cliente avulso já possui placa associada');
     }
