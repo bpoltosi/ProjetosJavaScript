@@ -30,6 +30,7 @@ const caminhos = {
   tickets: path.join(DIR_DADOS, 'tickets.csv'),
   bloqueios: path.join(DIR_DADOS, 'bloqueios.csv'),
   veiculos: path.join(DIR_DADOS, 'veiculos.json'),
+  vagas: path.join(DIR_DADOS, 'estado-vagas.json'),
 };
 
 const CAMINHO_CONFIGURACAO = path.join(__dirname, 'config', 'estacionamento.json');
