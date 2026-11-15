@@ -21,6 +21,9 @@ interativo:
 4) Consultas e relatórios
 5) Salvar dados agora
 6) Sair
+7) Terminal operacional (histórico de eventos)
+8) Financeiro e regularização de bloqueios
+9) Simulação automatizada do estacionamento
 ```
 
 - **Cadastro de clientes**: escolhe o tipo (Estudante/Professor/Empresa),
@@ -86,3 +89,55 @@ correção pretendida.
 **Pendência manual (fora do escopo deste código):** o diagrama de classes entregue como
 PDF/imagem na Fase 1 ainda precisa ser atualizado para incluir `Veiculo` e sua associação com
 `Cliente` (item A.7 do plano de correção).
+
+### Simulação automatizada
+
+No menu textual, abra **9) Simulação automatizada do estacionamento**. O serviço oferece iniciar,
+pausar, retomar, alterar a velocidade (1x, 2x ou 5x) e encerrar. Na inicialização, informe o ritmo
+de chegada, tamanho da frota e intervalo de permanência; os parâmetros podem ser deixados vazios
+para usar os padrões.
+
+A frota usa veículos já cadastrados quando disponíveis e gera novos clientes/veículos para completar
+o lote. A criação do cadastro é separada da entrada: o veículo só passa a ocupar uma vaga quando
+`App.autorizarEntrada()` autoriza a entrada e o `GerenciadorVagas` aloca uma vaga. As saídas usam
+`App.processarSaida()`, portanto cobrança, bloqueios, tickets e eventos seguem as mesmas regras da
+operação manual. Ao encerrar a simulação, os veículos que ela colocou no estacionamento recebem
+saída e as vagas são liberadas.
+
+A velocidade escala o intervalo entre chegadas e o tempo de permanência: 2x representa metade do
+tempo configurado; 5x representa um quinto. Todas as ações do simulador são identificadas com origem
+`simulacao` no histórico `data/eventos.jsonl`.
+
+### Servidor web e API HTTP
+
+Para executar a aplicação web local:
+
+```bash
+npm install
+npm run web
+```
+
+Por padrão, o servidor escuta somente em `http://127.0.0.1:3000`. A CLI continua disponível em
+`npm start`. É possível configurar o endereço e a porta com `ESTACIONAMENTO_HOST`,
+`ESTACIONAMENTO_PORTA` ou `PORT`.
+
+Controles da simulação pela API:
+
+| Método | Rota | Ação |
+|---|---|---|
+| GET | `/api/simulacao` | Estado, estatísticas e velocidade |
+| POST | `/api/simulacao/iniciar` | Inicia com opções JSON |
+| POST | `/api/simulacao/pausar` | Pausa chegadas e novos ciclos |
+| POST | `/api/simulacao/retomar` | Retoma a execução |
+| PUT | `/api/simulacao/velocidade` | Recebe `{ "velocidade": 1 }`, `2` ou `5` |
+| POST | `/api/simulacao/encerrar` | Finaliza e retira os veículos do simulador |
+
+Exemplo de início:
+
+```bash
+curl -X POST http://127.0.0.1:3000/api/simulacao/iniciar \
+  -H "Content-Type: application/json" \
+  -d '{"velocidade":2,"intervaloChegadaMs":5000,"quantidadeVeiculos":12,"permanenciaMinMs":8000,"permanenciaMaxMs":30000}'
+```
+
+O encerramento do servidor também encerra a simulação e salva o estado operacional.
