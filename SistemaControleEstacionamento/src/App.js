@@ -4,6 +4,7 @@ const RelatoriosGerenciais = require('./relatorios/RelatoriosGerenciais');
 const ClientesCsv = require('./persistencia/ClientesCsv');
 const TicketsCsv = require('./persistencia/TicketsCsv');
 const BloqueiosCsv = require('./persistencia/BloqueiosCsv');
+const VeiculosJson = require('./persistencia/VeiculosJson');
 
 /**
   Fachada do sistema. Continua sem I/O interativo (console.log/leitura de
@@ -54,8 +55,8 @@ class App {
    * @param {string} placa
    */
 
-  registrarPlaca(documento, placa) {
-    return this.cadastroClientes.registrarPlaca(documento, placa);
+  registrarPlaca(documento, placa, caracteristicas) {
+    return this.cadastroClientes.registrarPlaca(documento, placa, caracteristicas);
   }
 
   removerPlaca(documento, placa) {
@@ -106,6 +107,7 @@ class App {
 
   carregarTudo(caminhos) {
     ClientesCsv.carregar(caminhos.clientes, this.cadastroClientes);
+    VeiculosJson.carregar(caminhos.veiculos, this.cadastroClientes);
     TicketsCsv.carregar(caminhos.tickets, this.registroDeEntradasESaidas);
     TicketsCsv.reconstruirEstadoDerivado(this.cadastroClientes, this.registroDeEntradasESaidas);
     BloqueiosCsv.carregar(caminhos.bloqueios, this.registroDeEntradasESaidas);
@@ -119,6 +121,7 @@ class App {
 
   salvarTudo(caminhos) {
     ClientesCsv.salvar(caminhos.clientes, this.cadastroClientes);
+    VeiculosJson.salvar(caminhos.veiculos, this.cadastroClientes);
     TicketsCsv.salvar(caminhos.tickets, this.registroDeEntradasESaidas);
     BloqueiosCsv.salvar(caminhos.bloqueios, this.registroDeEntradasESaidas);
   }
