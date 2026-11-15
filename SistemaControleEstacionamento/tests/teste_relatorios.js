@@ -59,7 +59,7 @@ console.log('\n--- 1) valorArrecadadoPorPeriodo (janeiro/2026, todas categorias)
 const r1 = relatorios.valorArrecadadoPorPeriodo(new Date(2026, 0, 1), new Date(2026, 0, 31, 23, 59, 59));
 console.log(r1);
 assert(r1.quantidadeTickets === 4, 'deve contar os 4 tickets fechados de janeiro');
-assert(r1.valorTotal === 15 + 15 + 80 + 8, 'valorTotal deve somar os 4 valores pagos');
+assert(r1.valorTotal === 15 + 15 + 0 + 8, 'valorTotal deve somar os pagamentos efetivamente recebidos; débito empresarial aguarda quitação do boleto');
 
 console.log('\n--- 1b) valorArrecadadoPorPeriodo (só Estudante) ---');
 const r1b = relatorios.valorArrecadadoPorPeriodo(new Date(2026, 0, 1), new Date(2026, 0, 31, 23, 59, 59), 'Estudante');
