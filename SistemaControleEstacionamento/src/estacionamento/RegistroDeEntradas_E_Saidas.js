@@ -89,11 +89,14 @@ class RegistroDeEntradas_E_Saidas {
       }
 
       const clienteCadastrado = this.cadastroClientes.buscarClientePorPlaca(placa);
+      const dataAtualOperacao = opcoes.dataHoraEntrada instanceof Date
+        ? opcoes.dataHoraEntrada
+        : new Date();
       if (clienteCadastrado instanceof Empresa &&
           !clienteCadastrado.inadimplente &&
           clienteCadastrado.dataVencimentoBoleto !== null &&
           clienteCadastrado.saldoDevedor > 0 &&
-          new Date() > clienteCadastrado.dataVencimentoBoleto) {
+          dataAtualOperacao > clienteCadastrado.dataVencimentoBoleto) {
         this._registrarEventos([{
           tipo: 'CLIENTE_BLOQUEADO',
           resultado: 'bloqueado',
@@ -107,6 +110,7 @@ class RegistroDeEntradas_E_Saidas {
       if (clienteCadastrado) {
         const autorizado = clienteCadastrado.podeAutorizarEntrada({
           ticketsAbertos: this.ticketsAbertos,
+          dataAtual: dataAtualOperacao,
         });
         if (!autorizado) {
           throw new Error('entrada não autorizada para este cliente');
