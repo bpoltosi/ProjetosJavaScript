@@ -414,7 +414,7 @@
     const altura = Math.max(260, cursorY + 20);
     canvas.width = largura;
     canvas.height = altura;
-    canvas.style.height = \`\${altura}px\`;
+    canvas.style.height = `${altura}px`;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.imageSmoothingEnabled = false;
@@ -433,7 +433,7 @@
       ctx.fillStyle = grupo.cor;
       ctx.font = 'bold 9px "Lucida Console", monospace';
       ctx.textAlign = 'left';
-      ctx.fillText(\`SETOR \${grupo.nome.toUpperCase()} · \${grupo.vagas.length} VAGA(S)\`, 13, topo - 4);
+      ctx.fillText(`SETOR ${grupo.nome.toUpperCase()} · ${grupo.vagas.length} VAGA(S)`, 13, topo - 4);
     });
 
     const veiculosPorPlaca = new Map(state.veiculos.map((veiculo) => [veiculo.placa, veiculo]));
@@ -447,13 +447,13 @@
     ctx.fillStyle = MAP_PALETTE.roadText || '#D8E6D1';
     ctx.font = 'bold 8px "Lucida Console", monospace';
     ctx.textAlign = 'right';
-    ctx.fillText(\`PÁGINA \${state.mapPage + 1}/\${paginas}\`, largura - 13, altura - 7);
+    ctx.fillText(`PÁGINA ${state.mapPage + 1}/${paginas}`, largura - 13, altura - 7);
 
-    definirTexto('mapPageLabel', \`PÁGINA \${state.mapPage + 1} / \${paginas} · \${filtradas.length} VAGAS\`);
+    definirTexto('mapPageLabel', `PÁGINA ${state.mapPage + 1} / ${paginas} · ${filtradas.length} VAGAS`);
     $('#mapPrevPage').disabled = state.mapPage <= 0;
     $('#mapNextPage').disabled = state.mapPage >= paginas - 1;
     definirTexto('mapCaption', filtro
-      ? \`Setor filtrado: \${filtro}. Clique numa vaga para ver seu estado e seus dados.\`
+      ? `Setor filtrado: ${filtro}. Clique numa vaga para ver seu estado e seus dados.`
       : 'Mapa top-down ortográfico. Cada marcação corresponde a uma vaga real da API; clique para ver detalhes.');
   }
 
