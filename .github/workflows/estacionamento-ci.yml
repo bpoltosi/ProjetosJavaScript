@@ -1,0 +1,37 @@
+name: Estacionamento CI
+
+on:
+  push:
+    paths:
+      - "SistemaControleEstacionamento/**"
+      - ".github/workflows/estacionamento-ci.yml"
+  pull_request:
+    paths:
+      - "SistemaControleEstacionamento/**"
+      - ".github/workflows/estacionamento-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  testes:
+    name: Testes automatizados (Node.js 20)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: SistemaControleEstacionamento
+    steps:
+      - name: Obter código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+
+      - name: Executar suíte de testes
+        run: npm test
