@@ -12,6 +12,7 @@ const RegistroEventos = require('./estacionamento/RegistroEventos');
 const GeradorClientes = require('./estacionamento/GeradorClientes');
 const Estudante = require('./clientes/Estudante');
 const Empresa = require('./clientes/Empresa');
+const ConfiguracaoEstacionamento = require('./configuracao/ConfiguracaoEstacionamento');
 
 /**
   Fachada do sistema. Continua sem I/O interativo (console.log/leitura de
@@ -22,9 +23,13 @@ const Empresa = require('./clientes/Empresa');
 */
 class App {
   constructor(configuracao = null, opcoes = {}) {
-    this.configuracao = configuracao;
+    this.configuracao = configuracao
+      ? (configuracao instanceof ConfiguracaoEstacionamento
+          ? configuracao
+          : new ConfiguracaoEstacionamento(configuracao))
+      : null;
     this.cadastroClientes = new CadastroClientes();
-    this.gerenciadorVagas = configuracao ? new GerenciadorVagas(configuracao) : null;
+    this.gerenciadorVagas = this.configuracao ? new GerenciadorVagas(this.configuracao) : null;
     this.registroEventos = new RegistroEventos(opcoes.caminhoEventos ?? null);
     this.registroDeEntradasESaidas = new RegistroDeEntradas_E_Saidas(
       this.cadastroClientes,
