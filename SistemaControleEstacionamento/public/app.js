@@ -548,10 +548,6 @@
     pintarPistaVertical(ctx, saidaX, PISTA_Y, ultimaFaixa, 'cima');
     faixasRodagem.forEach((faixa) => {
       pintarPistaHorizontal(ctx, CORREDOR_ENTRADA_X, saidaX, faixa.y, ALTURA_PISTA);
-      ctx.fillStyle = '#B7C4B7';
-      ctx.font = 'bold 7px "Lucida Console", monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText('PISTA DE ACESSO', (CORREDOR_ENTRADA_X + saidaX) / 2, faixa.y - 11);
     });
 
     desenharGuaritaEPortao(ctx);
@@ -874,6 +870,17 @@
         ];
       } else {
         return;
+      }
+
+      // Se o operador filtrou outro setor, reabre a planta completa para que
+      // a animação chegue à vaga real do evento, em vez de escolher uma vaga errada.
+      if (acao !== 'bloqueada' && !caixa && vagaId && $('#mapCategoryFilter')?.value) {
+        $('#mapCategoryFilter').value = '';
+        desenharMapa();
+        const caixaVisivel = state.mapHitBoxes.find((item) => item.vaga.id === vagaId);
+        if (acao === 'entrada' && caixaVisivel) caminho = criarCaminhoEntrada(caixaVisivel);
+        else if (acao === 'saida' && caixaVisivel) caminho = criarCaminhoSaida(caixaVisivel, largura);
+        else return;
       }
 
       state.animacoesTransito.push({
