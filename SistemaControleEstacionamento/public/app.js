@@ -610,18 +610,111 @@
     ctx.restore();
   }
 
-  function calcularLimitesMolduraGrupo(caixasGrupo) {
-    const esquerda = Math.min(...caixasGrupo.map((caixa) => caixa.x)) - 18;
-    const direita = Math.max(...caixasGrupo.map((caixa) => caixa.x + caixa.w)) + 18;
+  function calcularLimitesMolduraGrupo(caixasGrupo, larguraMinima = 0) {
+    const esquerdaVagas = Math.min(...caixasGrupo.map((caixa) => caixa.x)) - 18;
+    const direitaVagas = Math.max(...caixasGrupo.map((caixa) => caixa.x + caixa.w)) + 18;
     const topo = Math.min(...caixasGrupo.map((caixa) => caixa.y)) - 17;
-    const fundo = Math.max(...caixasGrupo.map((caixa) => caixa.y + caixa.h)) + 12;
+    const fundo = Math.max(...caixasGrupo.map((caixa) => caixa.y + caixa.h) + 12;
+    const centroX = (esquerdaVagas + direitaVagas) / 2;
+    const largura = Math.max(direitaVagas - esquerdaVagas, larguraMinima);
 
     return {
-      x: esquerda,
+      x: centroX - largura / 2,
       y: topo,
-      largura: direita - esquerda,
+      largura,
       altura: fundo - topo,
     };
+  }
+
+  function calcularLayoutSetores(grupos, largura, slotW) {
+    const espacamentoX = 4;
+    const espacamentoSetores = 14;
+    const passoX = slotW + espacamentoX;
+    const inicioX = MARGEM_VAGAS_ESQUERDA;
+    const limiteDireito = largura - MARGEM_VAGAS_DIREITA;
+    const disponivel = limiteDireito - inicioX;
+    const larguraMaximaSetor = Math.min(340, disponivel);
+    const colunasMaximas = Math.max(1,
+      Math.min(48, Math.floor((larguraMaximaSetor - 36 + espacamentoX) / passoX)));
+    const setores = [];
+    const caixas = [];
+    const faixasRodagem = [];
+    const faixasRegistradas = new Set();
+
+    let linhaY = 110;
+    let cursorX = inicioX;
+    let maiorNumeroLinhas = 0;
+    let indiceLinha = 0;
+
+    grupos.forEach((grupo) => {
+      if (!grupo.vagas.length) return;
+
+      const colunas = Math.min(grupo.vagas.length, colunasMaximas);
+      const linhas = Math.ceil(grupo.vagas.length / colunas);
+      const larguraConteudo = (colunas - 1) * passoX + slotW;
+      const titulo = grupo.nome.toUpperCase() + ' · ' + grupo.vagas.length + ' VAGA(S)';
+      // A largura do título também conta: setores com uma vaga não ficam
+      // estreitos demais nem deixam seus nomes colidirem com os vizinhos.
+      const larguraTitulo = Math.ceil(titulo.length * 6.3 + 18);
+      const larguraSetor = Math.min(disponivel,
+        Math.max(larguraConteudo + 36, larguraTitulo));
+
+      if (cursorX > inicioX && cursorX + larguraSetor > limiteDireito) {
+        linhaY += 22 + maiorNumeroLinhas * PASSO_FILEIRA + 18;
+        cursorX = inicioX;
+        maiorNumeroLinhas = 0;
+        indiceLinha += 1;
+      }
+
+      const setor = {
+        id: grupo.id,
+        grupo,
+        x: cursorX,
+        y: linhaY,
+        largura: larguraSetor,
+        colunas,
+        linhas,
+        indiceLinha,
+      };
+      setores.push(setor);
+
+      const inicioVagasX = cursorX + (larguraSetor - larguraConteudo) / 2;
+      const inicioVagasY = linhaY + 22;
+      grupo.vagas.forEach((vaga, indice) => {
+        const linha = Math.floor(indice / colunas);
+        const coluna = indice % colunas;
+        const x = inicioVagasX + coluna * passoX;
+        const y = inicioVagasY + linha * PASSO_FILEIRA;
+        const faixaRodagemY = y + ALTURA_VAGA + 18;
+        caixas.push({
+          vaga,
+          x,
+          y,
+          w: slotW,
+          h: ALTURA_VAGA,
+          topoGrupo: linhaY + 12,
+          grupoId: grupo.id,
+          linha,
+          coluna,
+          faixaRodagemY,
+        });
+
+        const chaveFaixa = String(faixaRodagemY);
+        if (!faixasRegistradas.has(chaveFaixa)) {
+          faixasRegistradas.add(chaveFaixa);
+          faixasRodagem.push({ y: faixaRodagemY, grupoId: grupo.id, linha });
+        }
+      });
+
+      maiorNumeroLinhas = Math.max(maiorNumeroLinhas, linhas);
+      cursorX += larguraSetor + espacamentoSetores;
+    });
+
+    const altura = setores.length
+      ? Math.max(340, linhaY + 22 + maiorNumeroLinhas * PASSO_FILEIRA + 24)
+      : 340;
+
+    return { setores, caixas, faixasRodagem, altura };
   }
 
   function desenharMapa() {
@@ -636,49 +729,10 @@
     const grupos = agruparVagasPorCategoria(filtradas);
     const espacamentoX = 4;
     const disponivel = largura - MARGEM_VAGAS_ESQUERDA - MARGEM_VAGAS_DIREITA;
-    const colunas = Math.max(4, Math.min(48, Math.floor((disponivel + espacamentoX) / 38)));
-    const slotW = Math.max(32, Math.floor((disponivel - espacamentoX * (colunas - 1)) / colunas));
-    const slotH = ALTURA_VAGA;
-    const caixas = [];
-    const faixasRodagem = [];
-    let cursorY = 110;
-
-    grupos.forEach((grupo) => {
-      cursorY += 12;
-      const topoGrupo = cursorY;
-      const inicioFileiras = cursorY + 22;
-      grupo.vagas.forEach((vaga, indice) => {
-        const linha = Math.floor(indice / colunas);
-        const coluna = indice % colunas;
-        const y = inicioFileiras + linha * PASSO_FILEIRA;
-        const x = MARGEM_VAGAS_ESQUERDA + coluna * (slotW + espacamentoX);
-        const faixaRodagemY = y + slotH + 18;
-        caixas.push({
-          vaga,
-          x,
-          y,
-          w: slotW,
-          h: slotH,
-          topoGrupo,
-          grupoId: grupo.id,
-          linha,
-          faixaRodagemY,
-        });
-      });
-
-      const linhas = Math.ceil(grupo.vagas.length / colunas);
-      for (let linha = 0; linha < linhas; linha += 1) {
-        const y = inicioFileiras + linha * PASSO_FILEIRA;
-        faixasRodagem.push({
-          y: y + slotH + 18,
-          grupoId: grupo.id,
-          linha,
-        });
-      }
-      cursorY = inicioFileiras + linhas * PASSO_FILEIRA + 6;
-    });
-
-    const altura = Math.max(340, cursorY + 24);
+    const colunasMapa = Math.max(4, Math.min(48, Math.floor((disponivel + espacamentoX) / 38)));
+    const slotW = Math.max(32, Math.floor((disponivel - espacamentoX * (colunasMapa - 1)) / colunasMapa));
+    const layout = calcularLayoutSetores(grupos, largura, slotW);
+    const { setores, caixas, faixasRodagem, altura } = layout;
     if (canvas.width !== largura) canvas.width = largura;
     if (canvas.height !== altura) canvas.height = altura;
     canvas.style.height = altura + 'px';
@@ -687,13 +741,13 @@
     ctx.imageSmoothingEnabled = false;
     desenharFundoMapa(ctx, largura, altura);
 
-    // Ilhas/setores de estacionamento são desenhados antes das pistas.
-    grupos.forEach((grupo) => {
+    // Setores são compactados em linhas: cada moldura envolve somente suas
+    // vagas e o título, e várias categorias podem compartilhar a mesma faixa.
+    setores.forEach((setor) => {
+      const grupo = setor.grupo;
       const caixasGrupo = caixas.filter((caixa) => caixa.grupoId === grupo.id);
       if (!caixasGrupo.length) return;
-      // A moldura acompanha os limites reais das vagas deste setor,
-      // sem ocupar a largura inteira do mapa quando há poucas baias.
-      const moldura = calcularLimitesMolduraGrupo(caixasGrupo);
+      const moldura = calcularLimitesMolduraGrupo(caixasGrupo, setor.largura);
       ctx.fillStyle = 'rgba(16, 29, 23, .28)';
       ctx.fillRect(moldura.x, moldura.y, moldura.largura, moldura.altura);
       ctx.strokeStyle = grupo.cor;
