@@ -1,4 +1,4 @@
-# Roteiro de demonstração — Pixel Park
+# Roteiro de demonstração — Poltosi Pixel Park
 
 Duração sugerida: 60–90 segundos. Grave o navegador em 1080p, com zoom de 90–100%.
 Use uma instalação de demonstração limpa e dados descartáveis. Não grave documentos/placas de
@@ -12,15 +12,15 @@ pessoas reais.
 
    **PowerShell**
    ```powershell
-   $env:ESTACIONAMENTO_DIR_DADOS = "$HOME/pixel-park-demo-data"
-   $env:ESTACIONAMENTO_CONFIG = "$HOME/pixel-park-demo-config/estacionamento.json"
+   $env:ESTACIONAMENTO_DIR_DADOS = "$HOME/poltosi-pixel-park-demo-data"
+   $env:ESTACIONAMENTO_CONFIG = "$HOME/poltosi-pixel-park-demo-config/estacionamento.json"
    npm run web
    ```
 
    **Linux/macOS**
    ```bash
-   export ESTACIONAMENTO_DIR_DADOS="$HOME/pixel-park-demo-data"
-   export ESTACIONAMENTO_CONFIG="$HOME/pixel-park-demo-config/estacionamento.json"
+   export ESTACIONAMENTO_DIR_DADOS="$HOME/poltosi-pixel-park-demo-data"
+   export ESTACIONAMENTO_CONFIG="$HOME/poltosi-pixel-park-demo-config/estacionamento.json"
    npm run web
    ```
 
@@ -32,11 +32,11 @@ pessoas reais.
 
 | Tempo | O que mostrar | Narração sugerida |
 |---|---|---|
-| 0–10 s | Assistente inicial e distribuição de vagas | “O Pixel Park começa com a configuração da capacidade e dos setores; a configuração é validada e persistida no backend.” |
-| 10–22 s | Painel, indicadores e mapa Canvas | “O painel consulta o estado real. Cada slot no Canvas corresponde a uma vaga do servidor; as cores distinguem vagas livres, ocupadas e bloqueadas.” |
+| 0–10 s | Assistente inicial e distribuição de vagas | “O Poltosi Pixel Park começa com a configuração da capacidade e dos setores; a configuração é validada e persistida no backend.” |
+| 10–22 s | Painel, indicadores e rede de estradas | “O mapa mostra a avenida, o corredor de entrada, as pistas de cada fileira e o corredor de saída. Cada vaga e veículo reflete o backend.” |
 | 22–34 s | Gerar 5 clientes/veículos e abrir detalhes | “O gerador cria cadastros e metadados de veículos, mas não estaciona automaticamente. A entrada é uma operação separada.” |
-| 34–48 s | Autorizar uma entrada e ver o sprite na vaga | “Na entrada, o domínio valida o cliente e aloca uma vaga. A placa, o veículo e o slot aparecem no painel e no terminal.” |
-| 48–58 s | Processar saída e observar vaga liberada | “A saída aplica a política financeira do perfil e libera a vaga no backend; os indicadores e o mapa são atualizados pelo polling.” |
+| 34–48 s | Autorizar entrada e acompanhar a rota | “O veículo passa pela guarita, percorre o corredor de entrada e a pista da fileira antes de manobrar para a vaga.” |
+| 48–58 s | Processar saída e acompanhar o circuito | “O carro retorna à pista da fileira, segue pelo corredor da direita e sai pela avenida principal.” |
 | 58–72 s | Iniciar simulador em 2× e mostrar eventos `simulacao` | “O simulador usa os mesmos serviços de entrada e saída, então lotação, cobranças e recusas são reais, não animações independentes.” |
 | 72–85 s | Pausar/encerrar e abrir terminal | “É possível pausar e encerrar a simulação. O terminal mantém o histórico de eventos com sua origem.” |
 | 85–90 s | Encerrar e mostrar reinício/persistência | “Configuração, clientes, tickets, bloqueios e eventos são persistidos; a CLI continua disponível pelo mesmo conjunto de dados.” |
@@ -64,5 +64,5 @@ de as capturas reais terem sido salvas no repositório.
 
 ## Frase final
 
-“Pixel Park reúne regras de negócio reais, persistência, CLI, API HTTP, painel web, mapa Canvas 2D
-e simulação operacional em uma única aplicação JavaScript.”
+“Poltosi Pixel Park reúne regras de negócio reais, persistência, CLI, API HTTP, uma planta com circuito viário,
+rotas animadas e simulação operacional em uma única aplicação JavaScript.”

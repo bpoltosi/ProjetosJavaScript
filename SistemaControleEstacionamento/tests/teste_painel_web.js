@@ -40,6 +40,11 @@ async function executar() {
     assert.match(html, /id="startSimulationButton"/);
     assert.match(html, /id="parkingCanvas"/);
     assert.match(html, /id="mapCategoryFilter"/);
+    assert.match(html, /<title>Poltosi Pixel Park — Painel operacional<\/title>/);
+    assert.match(html, /<strong>POLTOSI PIXEL PARK<\/strong>/);
+    assert.match(html, /value="Poltosi Pixel Park"/);
+    assert.match(html, /CIRCUITO VIÁRIO · TODAS AS VAGAS/);
+    assert.match(html, /Avenida principal, corredor de entrada, pistas de acesso/i);
     assert.doesNotMatch(html, /mapPrevPage|mapNextPage|vacancyGrid|showAllVacanciesButton/);
     assert.match(html, /\/assets\/pixel-assets\.js/);
     assert.match(html, /\/styles\.css/);
@@ -106,6 +111,16 @@ async function executar() {
     assert.match(javascript, /state\.mapVisibleSlots = filtradas/);
     assert.match(javascript, /function processarNovosEventos/);
     assert.match(javascript, /function desenharAnimacoesTransito/);
+    assert.match(javascript, /function desenharRedeViaria/);
+    assert.match(javascript, /function pintarPistaHorizontal/);
+    assert.match(javascript, /function pintarPistaVertical/);
+    assert.match(javascript, /function criarCaminhoEntrada/);
+    assert.match(javascript, /function criarCaminhoSaida/);
+    assert.match(javascript, /function amostrarCaminho/);
+    assert.match(javascript, /CORREDOR_ENTRADA_X/);
+    assert.match(javascript, /CORREDOR_SAIDA_X/);
+    assert.match(javascript, /faixaRodagemY/);
+    assert.doesNotMatch(javascript, /lerp\(-28, alvo\.x/);
     assert.match(javascript, /requestAnimationFrame/);
     assert.match(javascript, /intervaloChegadaMs: 1600/);
     assert.match(javascript, /Number\(\$\('#simulationFleetSize'\)\.value\)/);

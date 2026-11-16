@@ -305,7 +305,11 @@
     const total = resumo.total || 0;
     const percentual = total ? Math.round(ocupadas / total * 100) : 0;
 
-    definirTexto('parkingTitle', dados.nomeEstacionamento || state.configuracao?.nome || 'ESTACIONAMENTO');
+    const nomeConfigurado = dados.nomeEstacionamento || state.configuracao?.nome || 'Poltosi Pixel Park';
+    const nomePainel = String(nomeConfigurado).trim().toLowerCase() === 'pixel park'
+      ? 'Poltosi Pixel Park'
+      : nomeConfigurado;
+    definirTexto('parkingTitle', nomePainel);
     definirTexto('occupiedCount', String(ocupadas));
     definirTexto('occupancyPercent', `${percentual}%`);
     definirTexto('capacityLabel', `${ocupadas} / ${total} vagas ocupadas`);
@@ -389,12 +393,20 @@
   }
 
   const PISTA_Y = 64;
+  const CORREDOR_ENTRADA_X = 210;
+  const CORREDOR_SAIDA_X = (largura) => largura - 42;
+  const PORTAO_X = 178;
+  const MARGEM_VAGAS_ESQUERDA = 252;
+  const MARGEM_VAGAS_DIREITA = 84;
+  const ALTURA_PISTA = 32;
+  const ALTURA_VAGA = 50;
+  const PASSO_FILEIRA = 98;
 
   function desenharFundoMapa(ctx, largura, altura) {
     ctx.fillStyle = MAP_PALETTE.asphalt || '#26372F';
     ctx.fillRect(0, 0, largura, altura);
     const textura = MAP_PALETTE.asphaltDots || [[8, 8], [18, 13], [12, 21], [25, 4]];
-    for (let y = 92; y < altura; y += 30) {
+    for (let y = 96; y < altura; y += 30) {
       for (let x = 8; x < largura; x += 34) {
         textura.forEach(([dx, dy]) => {
           ctx.fillStyle = MAP_PALETTE.asphaltTile || '#2B3D34';
@@ -408,40 +420,143 @@
     ctx.fillStyle = MAP_PALETTE.headerText || '#AFCB9A';
     ctx.font = 'bold 10px "Lucida Console", monospace';
     ctx.textAlign = 'left';
-    ctx.fillText('ENTRADA  ◀', 14, 19);
+    ctx.fillText('ENTRADA  →', 14, 19);
     ctx.textAlign = 'center';
     ctx.fillStyle = MAP_PALETTE.roadText || '#D8E4CF';
-    ctx.fillText('PISTA DE CIRCULAÇÃO · SENTIDO ÚNICO', largura / 2, 19);
+    ctx.fillText('AVENIDA PRINCIPAL · CIRCULAÇÃO EM SENTIDO ÚNICO', largura / 2, 19);
     ctx.textAlign = 'right';
-    ctx.fillText('SAÍDA  ▶', largura - 14, 19);
+    ctx.fillText('SAÍDA  →', largura - 14, 19);
+  }
 
-    ctx.fillStyle = '#1A2923';
-    ctx.fillRect(0, 38, largura, 48);
-    ctx.strokeStyle = MAP_PALETTE.roadStripe || '#E4D28A';
+  function desenharSetasHorizontais(ctx, inicioX, fimX, y) {
+    ctx.save();
+    ctx.strokeStyle = '#D9E2D5';
     ctx.lineWidth = 2;
-    ctx.setLineDash([11, 9]);
+    for (let x = inicioX + 70; x < fimX - 16; x += 150) {
+      ctx.beginPath();
+      ctx.moveTo(x - 5, y - 5);
+      ctx.lineTo(x + 2, y);
+      ctx.lineTo(x - 5, y + 5);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function desenharSetasVerticais(ctx, x, inicioY, fimY, sentido) {
+    ctx.save();
+    ctx.strokeStyle = '#D9E2D5';
+    ctx.lineWidth = 2;
+    for (let y = inicioY + 72; y < fimY - 12; y += 120) {
+      const ponta = y + (sentido === 'baixo' ? 6 : -6);
+      const base = y - (sentido === 'baixo' ? 4 : -4);
+      ctx.beginPath();
+      ctx.moveTo(x - 5, base);
+      ctx.lineTo(x, ponta);
+      ctx.lineTo(x + 5, base);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function pintarPistaHorizontal(ctx, inicioX, fimX, y, altura = ALTURA_PISTA) {
+    ctx.fillStyle = '#1A2524';
+    ctx.fillRect(inicioX, y - altura / 2, fimX - inicioX, altura);
+    ctx.fillStyle = '#283633';
+    ctx.fillRect(inicioX, y - altura / 2 + 3, fimX - inicioX, altura - 6);
+    ctx.strokeStyle = '#77847C';
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(8, PISTA_Y);
-    ctx.lineTo(largura - 8, PISTA_Y);
+    ctx.moveTo(inicioX, y - altura / 2 + 1);
+    ctx.lineTo(fimX, y - altura / 2 + 1);
+    ctx.moveTo(inicioX, y + altura / 2 - 1);
+    ctx.lineTo(fimX, y + altura / 2 - 1);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#E4D28A';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([12, 11]);
+    ctx.beginPath();
+    ctx.moveTo(inicioX + 6, y);
+    ctx.lineTo(fimX - 6, y);
     ctx.stroke();
     ctx.setLineDash([]);
+    desenharSetasHorizontais(ctx, inicioX, fimX, y);
+  }
 
-    // Guarita, operador e cancela em pixel art.
+  function pintarPistaVertical(ctx, x, inicioY, fimY, sentido) {
+    ctx.fillStyle = '#1A2524';
+    ctx.fillRect(x - ALTURA_PISTA / 2, inicioY, ALTURA_PISTA, fimY - inicioY);
+    ctx.fillStyle = '#283633';
+    ctx.fillRect(x - ALTURA_PISTA / 2 + 3, inicioY, ALTURA_PISTA - 6, fimY - inicioY);
+    ctx.strokeStyle = '#77847C';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x - ALTURA_PISTA / 2 + 1, inicioY);
+    ctx.lineTo(x - ALTURA_PISTA / 2 + 1, fimY);
+    ctx.moveTo(x + ALTURA_PISTA / 2 - 1, inicioY);
+    ctx.lineTo(x + ALTURA_PISTA / 2 - 1, fimY);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#E4D28A';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([12, 11]);
+    ctx.beginPath();
+    ctx.moveTo(x, inicioY + 5);
+    ctx.lineTo(x, fimY - 5);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    desenharSetasVerticais(ctx, x, inicioY, fimY, sentido);
+  }
+
+  function desenharGuaritaEPortao(ctx) {
+    // Guarita de controle antes do corredor de entrada.
+    ctx.fillStyle = '#101B18';
+    ctx.fillRect(92, 32, 54, 35);
     ctx.fillStyle = '#526B59';
-    ctx.fillRect(104, 29, 28, 25);
+    ctx.fillRect(96, 30, 48, 34);
     ctx.fillStyle = '#A8C6A6';
-    ctx.fillRect(109, 33, 18, 8);
+    ctx.fillRect(102, 36, 36, 13);
     ctx.fillStyle = '#24352B';
-    ctx.fillRect(109, 44, 18, 7);
+    ctx.fillRect(103, 52, 34, 9);
     ctx.fillStyle = '#E6CE7E';
-    ctx.fillRect(137, 48, 30, 3);
+    ctx.fillRect(98, 28, 44, 4);
     ctx.fillStyle = '#B75E50';
-    ctx.fillRect(137, 44, 4, 11);
-    ctx.fillRect(163, 44, 4, 11);
+    ctx.fillRect(PORTAO_X - 2, PISTA_Y - 2, 5, 20);
+    ctx.save();
+    ctx.translate(PORTAO_X, PISTA_Y + 1);
+    ctx.rotate(-0.52);
+    ctx.fillStyle = '#E8D9B3';
+    ctx.fillRect(0, -2, 33, 4);
+    ctx.fillStyle = '#B64F49';
+    for (let x = 4; x < 32; x += 9) ctx.fillRect(x, -2, 4, 4);
+    ctx.restore();
     ctx.fillStyle = '#E9D18C';
-    ctx.fillRect(142, 45, 4, 3);
-    ctx.fillRect(150, 45, 4, 3);
-    ctx.fillRect(158, 45, 4, 3);
+    ctx.font = 'bold 7px "Lucida Console", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('CANCELA', PORTAO_X, PISTA_Y - 15);
+  }
+
+  function desenharRedeViaria(ctx, largura, altura, faixasRodagem) {
+    const saidaX = CORREDOR_SAIDA_X(largura);
+    const ultimaFaixa = faixasRodagem.length
+      ? Math.max(...faixasRodagem.map((faixa) => faixa.y))
+      : PISTA_Y + 70;
+
+    // A avenida liga entrada e saída; dois corredores verticais fecham o circuito.
+    pintarPistaHorizontal(ctx, 0, largura, PISTA_Y, 48);
+    pintarPistaVertical(ctx, CORREDOR_ENTRADA_X, PISTA_Y, ultimaFaixa, 'baixo');
+    pintarPistaVertical(ctx, saidaX, PISTA_Y, ultimaFaixa, 'cima');
+    faixasRodagem.forEach((faixa) => {
+      pintarPistaHorizontal(ctx, CORREDOR_ENTRADA_X, saidaX, faixa.y, ALTURA_PISTA);
+    });
+
+    desenharGuaritaEPortao(ctx);
+    ctx.fillStyle = '#AFCB9A';
+    ctx.font = 'bold 8px "Lucida Console", monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('ACESSO / ENTRADA', 14, PISTA_Y + 24);
+    ctx.textAlign = 'right';
+    ctx.fillText('RETORNO / SAÍDA', largura - 14, PISTA_Y + 24);
   }
 
   function desenharVaga(ctx, vaga, caixa, selecionada, veiculo) {
@@ -496,38 +611,56 @@
     const shell = $('#canvasShell');
     if (!canvas || !shell) return;
 
-    // Mantém uma planta larga também em telas estreitas; o contêiner permite rolagem horizontal.
-    const largura = Math.max(900, Math.floor(shell.clientWidth - 4));
+    // A planta conserva uma largura mínima para que as pistas e as baias não se sobreponham.
+    const largura = Math.max(1120, Math.floor(shell.clientWidth - 4));
     const filtradas = vagasDoMapa();
     state.mapVisibleSlots = filtradas;
     const grupos = agruparVagasPorCategoria(filtradas);
-    const margem = 22;
     const espacamentoX = 4;
-    const espacamentoY = 4;
-    const colunas = Math.max(3, Math.min(48, Math.floor((largura - margem * 2 + espacamentoX) / 38)));
-    const slotW = Math.max(32, Math.floor((largura - margem * 2 - espacamentoX * (colunas - 1)) / colunas));
-    const slotH = 52;
-    let cursorY = 105;
+    const disponivel = largura - MARGEM_VAGAS_ESQUERDA - MARGEM_VAGAS_DIREITA;
+    const colunas = Math.max(4, Math.min(48, Math.floor((disponivel + espacamentoX) / 38)));
+    const slotW = Math.max(32, Math.floor((disponivel - espacamentoX * (colunas - 1)) / colunas));
+    const slotH = ALTURA_VAGA;
     const caixas = [];
+    const faixasRodagem = [];
+    let cursorY = 110;
 
     grupos.forEach((grupo) => {
-      cursorY += 8;
+      cursorY += 12;
       const topoGrupo = cursorY;
-      cursorY += 21;
+      const inicioFileiras = cursorY + 22;
       grupo.vagas.forEach((vaga, indice) => {
         const linha = Math.floor(indice / colunas);
         const coluna = indice % colunas;
-        const faixaCirculacao = Math.floor(linha / 4) * 12;
-        const y = cursorY + linha * (slotH + espacamentoY) + faixaCirculacao;
-        const x = margem + coluna * (slotW + espacamentoX);
-        caixas.push({ vaga, x, y, w: slotW, h: slotH, topoGrupo, grupoId: grupo.id });
+        const y = inicioFileiras + linha * PASSO_FILEIRA;
+        const x = MARGEM_VAGAS_ESQUERDA + coluna * (slotW + espacamentoX);
+        const faixaRodagemY = y + slotH + 18;
+        caixas.push({
+          vaga,
+          x,
+          y,
+          w: slotW,
+          h: slotH,
+          topoGrupo,
+          grupoId: grupo.id,
+          linha,
+          faixaRodagemY,
+        });
       });
+
       const linhas = Math.ceil(grupo.vagas.length / colunas);
-      const faixasCirculacao = Math.floor(Math.max(0, linhas - 1) / 4);
-      cursorY += linhas * (slotH + espacamentoY) + faixasCirculacao * 12 + 24;
+      for (let linha = 0; linha < linhas; linha += 1) {
+        const y = inicioFileiras + linha * PASSO_FILEIRA;
+        faixasRodagem.push({
+          y: y + slotH + 18,
+          grupoId: grupo.id,
+          linha,
+        });
+      }
+      cursorY = inicioFileiras + linhas * PASSO_FILEIRA + 6;
     });
 
-    const altura = Math.max(320, cursorY + 16);
+    const altura = Math.max(340, cursorY + 24);
     if (canvas.width !== largura) canvas.width = largura;
     if (canvas.height !== altura) canvas.height = altura;
     canvas.style.height = altura + 'px';
@@ -536,40 +669,31 @@
     ctx.imageSmoothingEnabled = false;
     desenharFundoMapa(ctx, largura, altura);
 
+    // Ilhas/setores de estacionamento são desenhados antes das pistas.
     grupos.forEach((grupo) => {
       const caixasGrupo = caixas.filter((caixa) => caixa.grupoId === grupo.id);
       if (!caixasGrupo.length) return;
-      const topo = Math.min(...caixasGrupo.map((caixa) => caixa.y)) - 16;
-      const fundo = Math.max(...caixasGrupo.map((caixa) => caixa.y + caixa.h)) + 8;
-      ctx.fillStyle = 'rgba(16, 29, 23, .22)';
-      ctx.fillRect(8, topo, largura - 16, fundo - topo);
+      const topo = Math.min(...caixasGrupo.map((caixa) => caixa.y)) - 17;
+      const fundo = Math.max(...caixasGrupo.map((caixa) => caixa.y + caixa.h)) + 12;
+      ctx.fillStyle = 'rgba(16, 29, 23, .28)';
+      ctx.fillRect(MARGEM_VAGAS_ESQUERDA - 18, topo,
+        largura - MARGEM_VAGAS_ESQUERDA - MARGEM_VAGAS_DIREITA + 36, fundo - topo);
       ctx.strokeStyle = grupo.cor;
-      ctx.globalAlpha = .48;
+      ctx.globalAlpha = .55;
       ctx.lineWidth = 1;
-      ctx.strokeRect(8, topo, largura - 16, fundo - topo);
+      ctx.strokeRect(MARGEM_VAGAS_ESQUERDA - 18, topo,
+        largura - MARGEM_VAGAS_ESQUERDA - MARGEM_VAGAS_DIREITA + 36, fundo - topo);
       ctx.globalAlpha = 1;
       ctx.fillStyle = grupo.cor;
-      ctx.fillRect(8, topo, 4, fundo - topo);
+      ctx.fillRect(MARGEM_VAGAS_ESQUERDA - 18, topo, 4, fundo - topo);
       ctx.font = 'bold 10px "Lucida Console", monospace';
       ctx.textAlign = 'left';
-      ctx.fillText(grupo.nome.toUpperCase() + ' · ' + grupo.vagas.length + ' VAGA(S)', 17, topo - 4);
-
-      const linhasGrupo = Array.from(new Set(caixasGrupo.map((caixa) => caixa.y))).sort((a, b) => a - b);
-      for (let indiceLinha = 1; indiceLinha < linhasGrupo.length; indiceLinha += 1) {
-        if (indiceLinha % 4 !== 0) continue;
-        const faixaY = Math.floor((linhasGrupo[indiceLinha - 1] + slotH + linhasGrupo[indiceLinha]) / 2);
-        ctx.fillStyle = '#182821';
-        ctx.fillRect(12, faixaY - 5, largura - 24, 14);
-        ctx.strokeStyle = '#B2C69A';
-        ctx.lineWidth = 1;
-        ctx.setLineDash([6, 8]);
-        ctx.beginPath();
-        ctx.moveTo(20, faixaY + 2);
-        ctx.lineTo(largura - 20, faixaY + 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
+      ctx.fillText(grupo.nome.toUpperCase() + ' · ' + grupo.vagas.length + ' VAGA(S)',
+        MARGEM_VAGAS_ESQUERDA - 10, topo - 4);
     });
+
+    // Rede física: avenida, corredor de entrada, pistas entre fileiras e corredor de saída.
+    desenharRedeViaria(ctx, largura, altura, faixasRodagem);
 
     state.mapHitBoxes = caixas;
     const veiculosPorPlaca = new Map(state.veiculos.map((veiculo) => [veiculo.placa, veiculo]));
@@ -581,84 +705,108 @@
 
     desenharAnimacoesTransito(ctx, largura);
     definirTexto('mapCaption', $('#mapCategoryFilter')?.value
-      ? 'Setor filtrado: ' + ($('#mapCategoryFilter').selectedOptions[0]?.textContent || 'selecionado') + ' · ' + filtradas.length + ' vaga(s) nesta visão.'
-      : 'Visão única de ' + filtradas.length + ' vaga(s). Veículos entram, estacionam, saem e têm tentativas negadas animadas no próprio pátio.');
+      ? 'Setor filtrado: ' + ($('#mapCategoryFilter').selectedOptions[0]?.textContent || 'selecionado') +
+        ' · ' + filtradas.length + ' vaga(s). Cada fileira tem acesso pela pista.'
+      : 'Circuito viário em sentido único: entrada pela esquerda, acesso às fileiras, corredor de retorno à direita e saída pela avenida.');
   }
 
-  function lerp(inicio, fim, progresso) {
-    return inicio + (fim - inicio) * progresso;
+  function amostrarCaminho(pontos, progresso) {
+    if (!Array.isArray(pontos) || pontos.length < 2) return { x: 0, y: PISTA_Y, rotacao: Math.PI / 2 };
+    const segmentos = [];
+    let comprimentoTotal = 0;
+    for (let i = 0; i < pontos.length - 1; i += 1) {
+      const dx = pontos[i + 1].x - pontos[i].x;
+      const dy = pontos[i + 1].y - pontos[i].y;
+      const comprimento = Math.hypot(dx, dy);
+      segmentos.push({ inicio: pontos[i], fim: pontos[i + 1], dx, dy, comprimento });
+      comprimentoTotal += comprimento;
+    }
+
+    let distancia = Math.max(0, Math.min(1, progresso)) * comprimentoTotal;
+    for (const segmento of segmentos) {
+      if (distancia <= segmento.comprimento || segmento === segmentos[segmentos.length - 1]) {
+        const t = segmento.comprimento > 0 ? Math.min(1, distancia / segmento.comprimento) : 1;
+        const direcao = Math.atan2(segmento.dy, segmento.dx);
+        return {
+          x: segmento.inicio.x + segmento.dx * t,
+          y: segmento.inicio.y + segmento.dy * t,
+          // Os sprites são desenhados apontando para o topo do canvas.
+          rotacao: direcao + Math.PI / 2,
+        };
+      }
+      distancia -= segmento.comprimento;
+    }
+
+    const ultimo = pontos[pontos.length - 1];
+    return { x: ultimo.x, y: ultimo.y, rotacao: Math.PI / 2 };
+  }
+
+  function criarCaminhoEntrada(caixa) {
+    const alvoX = caixa.x + caixa.w / 2;
+    const alvoY = caixa.y + caixa.h / 2;
+    return [
+      { x: -30, y: PISTA_Y },
+      { x: CORREDOR_ENTRADA_X, y: PISTA_Y },
+      { x: CORREDOR_ENTRADA_X, y: caixa.faixaRodagemY },
+      { x: alvoX, y: caixa.faixaRodagemY },
+      { x: alvoX, y: alvoY },
+    ];
+  }
+
+  function criarCaminhoSaida(caixa, largura) {
+    const alvoX = caixa.x + caixa.w / 2;
+    const alvoY = caixa.y + caixa.h / 2;
+    const saidaX = CORREDOR_SAIDA_X(largura);
+    return [
+      { x: alvoX, y: alvoY },
+      { x: alvoX, y: caixa.faixaRodagemY },
+      { x: saidaX, y: caixa.faixaRodagemY },
+      { x: saidaX, y: PISTA_Y },
+      { x: largura + 32, y: PISTA_Y },
+    ];
   }
 
   function desenharAnimacoesTransito(ctx, largura) {
     const agora = performance.now();
     const ativas = [];
     state.animacoesTransito.forEach((animacao) => {
-      const progressoBruto = (agora - animacao.inicio) / animacao.duracao;
-      if (progressoBruto >= 1) return;
+      const bruto = (agora - animacao.inicio) / animacao.duracao;
+      if (bruto >= 1) return;
       ativas.push(animacao);
-      const progresso = Math.max(0, Math.min(1, progressoBruto));
-      const suavizado = progresso * progresso * (3 - 2 * progresso);
-      const caixaAlvo = state.mapHitBoxes.find((caixa) => caixa.vaga.id === animacao.vagaId);
-      const alvo = caixaAlvo
-        ? { x: caixaAlvo.x + caixaAlvo.w / 2, y: caixaAlvo.y + caixaAlvo.h / 2 }
-        : { x: Math.round(largura * .62), y: PISTA_Y };
-      const caixaOrigem = state.mapHitBoxes.find((caixa) => caixa.vaga.id === animacao.vagaId);
-      const origem = caixaOrigem
-        ? { x: caixaOrigem.x + caixaOrigem.w / 2, y: caixaOrigem.y + caixaOrigem.h / 2 }
-        : { x: Math.round(largura * .62), y: PISTA_Y };
-      let x;
-      let y;
-      let rotacao = Math.PI / 2;
+      const progresso = Math.max(0, Math.min(1, bruto));
+      let posicao;
 
-      if (animacao.acao === 'entrada') {
-        if (suavizado < .52) {
-          x = lerp(-28, alvo.x, suavizado / .52);
-          y = PISTA_Y;
-        } else {
-          x = alvo.x;
-          y = lerp(PISTA_Y, alvo.y, (suavizado - .52) / .48);
-          rotacao = 0;
-        }
-      } else if (animacao.acao === 'saida') {
-        if (suavizado < .48) {
-          x = origem.x;
-          y = lerp(origem.y, PISTA_Y, suavizado / .48);
-          rotacao = 0;
-        } else {
-          x = lerp(origem.x, largura + 34, (suavizado - .48) / .52);
-          y = PISTA_Y;
-        }
-      } else {
-        const barreiraX = 174;
-        if (suavizado < .56) {
-          x = lerp(-28, barreiraX, suavizado / .56);
-        } else if (suavizado < .79) {
-          x = barreiraX;
-        } else {
-          x = lerp(barreiraX, -38, (suavizado - .79) / .21);
-        }
-        y = PISTA_Y;
-        rotacao = Math.PI / 2;
-        if (suavizado >= .56 && suavizado < .79) {
-          const piscando = Math.floor(agora / 150) % 2 === 0;
-          ctx.fillStyle = piscando ? '#9D4542' : '#713532';
-          ctx.fillRect(barreiraX - 9, PISTA_Y - 30, 114, 18);
+      if (animacao.acao === 'bloqueada') {
+        if (progresso < .58) {
+          posicao = amostrarCaminho(animacao.caminho, progresso / .58);
+        } else if (progresso < .78) {
+          posicao = amostrarCaminho(animacao.caminho, 1);
+          const piscando = Math.floor(agora / 140) % 2 === 0;
+          ctx.fillStyle = piscando ? '#A13E3A' : '#713532';
+          ctx.fillRect(PORTAO_X - 15, PISTA_Y - 29, 122, 18);
           ctx.strokeStyle = '#F0C86A';
           ctx.lineWidth = 2;
-          ctx.strokeRect(barreiraX - 9, PISTA_Y - 30, 114, 18);
+          ctx.strokeRect(PORTAO_X - 15, PISTA_Y - 29, 122, 18);
           ctx.fillStyle = '#FFF0D0';
           ctx.font = 'bold 9px "Lucida Console", monospace';
           ctx.textAlign = 'center';
-          ctx.fillText('ACESSO BLOQUEADO', barreiraX + 48, PISTA_Y - 18);
+          ctx.fillText('ENTRADA NEGADA', PORTAO_X + 46, PISTA_Y - 17);
+        } else {
+          posicao = amostrarCaminho(animacao.caminho, 1 - ((progresso - .78) / .22));
         }
+      } else {
+        // A animação percorre cada trecho do circuito na ordem; só sai do asfalto
+        // no último segmento, quando manobra para entrar na baia.
+        const suavizado = progresso * progresso * (3 - 2 * progresso);
+        posicao = amostrarCaminho(animacao.caminho, suavizado);
       }
 
-      desenharSprite(ctx, animacao.veiculo, x, y, 44, 30, rotacao);
+      desenharSprite(ctx, animacao.veiculo, posicao.x, posicao.y, 42, 30, posicao.rotacao);
       if (animacao.acao !== 'bloqueada' && animacao.veiculo.placa) {
         ctx.fillStyle = '#F0F4E9';
         ctx.font = 'bold 7px "Lucida Console", monospace';
         ctx.textAlign = 'center';
-        ctx.fillText(animacao.veiculo.placa, x, y + (rotacao === 0 ? 27 : 25));
+        ctx.fillText(animacao.veiculo.placa, posicao.x, posicao.y + 24);
       }
     });
     state.animacoesTransito = ativas;
@@ -688,6 +836,7 @@
       .filter((evento) => !state.idsEventosConhecidos.has(evento.id))
       .reverse();
 
+    const largura = $('#parkingCanvas')?.width || 1120;
     novos.forEach((evento) => {
       state.idsEventosConhecidos.add(evento.id);
       const tipo = String(evento.tipo || '').toUpperCase();
@@ -708,12 +857,37 @@
         tipoVeiculo: evento.tipoVeiculo || veiculoAtual?.tipoVeiculo || veiculoAnterior?.tipoVeiculo || veiculoCadastrado?.tipo || 'hatch',
         corVeiculo: evento.corVeiculo || veiculoAtual?.corVeiculo || veiculoAnterior?.corVeiculo || veiculoCadastrado?.cor || '#D66F78',
       };
+
+      const vagaId = evento.vagaId || veiculoAtual?.vagaId || veiculoAnterior?.vagaId || null;
+      let caixa = state.mapHitBoxes.find((item) => item.vaga.id === vagaId);
+
+      // Se o operador filtrou outro setor, reabre a planta completa para que
+      // a animação chegue à vaga real do evento, em vez de escolher uma vaga errada.
+      if (acao !== 'bloqueada' && !caixa && vagaId && $('#mapCategoryFilter')?.value) {
+        $('#mapCategoryFilter').value = '';
+        desenharMapa();
+        caixa = state.mapHitBoxes.find((item) => item.vaga.id === vagaId);
+      }
+
+      let caminho;
+      if (acao === 'entrada' && caixa) caminho = criarCaminhoEntrada(caixa);
+      else if (acao === 'saida' && caixa) caminho = criarCaminhoSaida(caixa, largura);
+      else if (acao === 'bloqueada') {
+        caminho = [
+          { x: -30, y: PISTA_Y },
+          { x: PORTAO_X - 20, y: PISTA_Y },
+        ];
+      } else {
+        return;
+      }
+
       state.animacoesTransito.push({
         acao,
         inicio: performance.now(),
-        duracao: acao === 'bloqueada' ? 1850 : 2100,
+        duracao: acao === 'bloqueada' ? 2400 : 3900,
         veiculo,
-        vagaId: evento.vagaId || veiculoAtual?.vagaId || veiculoAnterior?.vagaId || null,
+        vagaId,
+        caminho,
       });
     });
 
