@@ -118,9 +118,11 @@ async function executar() {
     assert.match(javascript, /function calcularLimitesMolduraGrupo/);
     assert.match(javascript, /calcularLimitesMolduraGrupo\(caixasGrupo\)/);
     assert.match(javascript, /ctx\.fillRect\(moldura\.x, moldura\.y, moldura\.largura, moldura\.altura\)/);
-    const helperMoldura = javascript.match(/function calcularLimitesMolduraGrupo\\(caixasGrupo\\) \\{[\\s\\S]*?\\n  \\}/);
-    assert.ok(helperMoldura, 'o helper de moldura adaptativa deve existir');
-    const calcularLimitesMolduraGrupo = vm.runInNewContext('(' + helperMoldura[0] + ')');
+    const inicioHelperMoldura = javascript.indexOf('function calcularLimitesMolduraGrupo');
+    const fechamentoHelperMoldura = javascript.indexOf(String.fromCharCode(10) + '  }', inicioHelperMoldura);
+    assert.ok(inicioHelperMoldura >= 0 && fechamentoHelperMoldura > inicioHelperMoldura);
+    const helperMoldura = javascript.slice(inicioHelperMoldura, fechamentoHelperMoldura + 4);
+    const calcularLimitesMolduraGrupo = vm.runInNewContext('(' + helperMoldura + ')');
     const molduraUmaVaga = calcularLimitesMolduraGrupo([
       { x: 252, y: 144, w: 36, h: 50 },
     ]);
