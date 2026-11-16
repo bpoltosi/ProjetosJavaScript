@@ -34,6 +34,9 @@ async function executar() {
     assert.match(html, /id="exitForm"/);
     assert.match(html, /id="generationForm"/);
     assert.match(html, /id="eventTerminal"/);
+    assert.match(html, /id="securityGuardStatus"/);
+    assert.match(html, /id="simulationFleetSize"/);
+    assert.match(html, /class="control-room"/);
     assert.match(html, /id="startSimulationButton"/);
     assert.match(html, /id="parkingCanvas"/);
     assert.match(html, /id="mapCategoryFilter"/);
@@ -56,6 +59,9 @@ async function executar() {
     assert.match(css, /\.canvas-shell/);
     assert.match(css, /image-rendering: pixelated/);
     assert.match(css, /\.map-pagination/);
+    assert.match(css, /\.control-room/);
+    assert.match(css, /\.security-guard/);
+    assert.match(css, /grid-template-areas: "actions yard"/);
     assert.match(css, /\.color-palette/);
     assert.match(css, /\.color-swatch/);
     console.log('✅ Folha de estilos é servida com identidade pixel art e layout responsivo.');
@@ -99,7 +105,12 @@ async function executar() {
     assert.match(javascript, /sincronizarOpcoesCategorias/);
     assert.match(javascript, /categoriasDoPerfil/);
     assert.match(javascript, /idsCategoriasConfiguradas\.has\('geral'\)/);
-    assert.match(javascript, /mapPageSize: 80/);
+    assert.match(javascript, /state\.mapVisibleSlots = filtradas/);
+    assert.match(javascript, /function processarNovosEventos/);
+    assert.match(javascript, /function desenharAnimacoesTransito/);
+    assert.match(javascript, /requestAnimationFrame/);
+    assert.match(javascript, /intervaloChegadaMs: 1600/);
+    assert.match(javascript, /Number\(\$\('#simulationFleetSize'\)\.value\)/);
     assert.match(javascript, /ParkingPixelAssets/);
     assert.doesNotMatch(javascript, /react-dom|createRoot\(|new Phaser\./i);
     const idsHtml = new Set(Array.from(html.matchAll(/\bid="([^"]+)"/g), (match) => match[1]));
