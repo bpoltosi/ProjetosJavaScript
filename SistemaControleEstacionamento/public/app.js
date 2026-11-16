@@ -254,16 +254,24 @@
       throw new Error(`A distribuição soma ${soma} vaga(s), mas a capacidade informada é ${capacidadeTotal}.`);
     }
 
+    const idsCategoriasConfiguradas = new Set(ids);
+    const categoriasDoPerfil = (id) => {
+      const permitidas = [];
+      if (idsCategoriasConfiguradas.has(id)) permitidas.push(id);
+      if (id !== 'geral' && idsCategoriasConfiguradas.has('geral')) permitidas.push('geral');
+      return permitidas.length > 0 ? permitidas : ['*'];
+    };
+
     return {
       versao: 1,
       nome,
       capacidadeTotal,
       categorias,
       perfisCliente: [
-        { id: 'estudante', nome: 'Estudante', classeDominio: 'estudante', limitePlacas: 1, categoriasVagaPermitidas: ['*'] },
-        { id: 'funcionario', nome: 'Funcionário', classeDominio: 'personalizado', limitePlacas: 2, categoriasVagaPermitidas: ['*'] },
-        { id: 'professor', nome: 'Professor', classeDominio: 'professor', limitePlacas: 2, categoriasVagaPermitidas: ['*'] },
-        { id: 'empresa', nome: 'Empresa', classeDominio: 'empresa', limitePlacas: null, categoriasVagaPermitidas: ['*'] },
+        { id: 'estudante', nome: 'Estudante', classeDominio: 'estudante', limitePlacas: 1, categoriasVagaPermitidas: categoriasDoPerfil('estudante') },
+        { id: 'funcionario', nome: 'Funcionário', classeDominio: 'personalizado', limitePlacas: 2, categoriasVagaPermitidas: categoriasDoPerfil('funcionario') },
+        { id: 'professor', nome: 'Professor', classeDominio: 'professor', limitePlacas: 2, categoriasVagaPermitidas: categoriasDoPerfil('professor') },
+        { id: 'empresa', nome: 'Empresa', classeDominio: 'empresa', limitePlacas: null, categoriasVagaPermitidas: categoriasDoPerfil('geral') },
       ],
     };
   }
