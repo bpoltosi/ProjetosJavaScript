@@ -201,7 +201,7 @@ com o histórico persistente de eventos. A simulação web inicia por padrão co
 intervalo reduzido entre chegadas; o tamanho da frota pode ser ajustado no painel.
 
 Arquivos principais:
-- `public/app.js`: sincronização HTTP, paginação, seleção e renderização do mapa.
+- `public/app.js`: sincronização HTTP, planta completa, seleção e animações de trânsito.
 - `public/assets/pixel-assets.js`: sprites, cores e padrões de pixel art.
 - `public/styles.css`: moldura responsiva e tratamento pixelated do Canvas.
 
