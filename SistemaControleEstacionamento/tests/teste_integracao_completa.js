@@ -95,7 +95,7 @@ async function executar() {
 
     const index = await fetch(`${primeiroHttp.baseUrl}/`);
     assert.equal(index.status, 200);
-    assert.match(await index.text(), /PIXEL PARK/);
+    assert.match(await index.text(), /POLTOSI PIXEL PARK/);
     console.log('✅ Instalação limpa inicia a API e entrega a página de configuração.');
 
     // 2. Configuração inicial passa pelo mesmo endpoint usado pelo assistente web.
