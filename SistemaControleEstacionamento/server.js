@@ -8,6 +8,7 @@ const Professor = require('./src/clientes/Professor');
 const Empresa = require('./src/clientes/Empresa');
 const ConfiguracaoEstacionamento = require('./src/configuracao/ConfiguracaoEstacionamento');
 const GerenciadorVagas = require('./src/estacionamento/GerenciadorVagas');
+const ClienteAvulso = require('./src/clientes/ClienteAvulso');
 
 function criarCaminhos(diretorioDados) {
   return {
@@ -87,6 +88,61 @@ function statusDoErro(erro) {
   return 500;
 }
 
+function prepararGerenciadorReconfigurado(estacionamento, configuracao) {
+  const gerenciadorAtual = estacionamento.gerenciadorVagas ?? null;
+  const novoGerenciador = new GerenciadorVagas(configuracao);
+  const ticketsRestaurados = [];
+
+  for (const ticket of estacionamento.registroDeEntradasESaidas.ticketsAbertos.values()) {
+    const placa = ticket.placa;
+    const cliente = estacionamento.buscarClientePorPlaca(placa) ?? new ClienteAvulso(placa);
+    const veiculo = cliente.placas.get(placa);
+
+    exigirCampo(veiculo, `não foi possível preservar o veículo ${placa}: seus dados não estão disponíveis`, 409);
+
+    let vagaId = ticket.vagaId;
+    if (gerenciadorAtual) {
+      const vagaAtual = gerenciadorAtual.buscarPorPlaca(placa);
+      exigirCampo(
+        vagaAtual && vagaAtual.status === 'ocupada',
+        `não foi possível preservar o veículo ${placa}: a vaga atual não está consistente`,
+        409
+      );
+      exigirCampo(
+        !vagaId || vagaId === vagaAtual.id,
+        `não foi possível preservar o veículo ${placa}: o ticket e a vaga atual apontam para posições diferentes`,
+        409
+      );
+      vagaId = vagaAtual.id;
+    }
+
+    try {
+      const vagaRestaurada = novoGerenciador.restaurarOcupacao(vagaId, placa, cliente, veiculo);
+      ticketsRestaurados.push({ ticket, vagaId: vagaRestaurada.id });
+    } catch (erro) {
+      const falha = new Error(
+        `a configuração não pode ser aplicada enquanto ${placa} estiver estacionado: ${erro.message}`
+      );
+      falha.statusCode = 409;
+      throw falha;
+    }
+  }
+
+  if (gerenciadorAtual) {
+    for (const vagaBloqueada of gerenciadorAtual.listarVagas({ status: 'bloqueada' })) {
+      const vagaNova = novoGerenciador.buscarPorId(vagaBloqueada.id);
+      exigirCampo(
+        vagaNova && vagaNova.categoriaId === vagaBloqueada.categoriaId,
+        `a configuração não pode remover ou reclassificar a vaga bloqueada ${vagaBloqueada.id}; desbloqueie-a antes`,
+        409
+      );
+      novoGerenciador.bloquear(vagaBloqueada.id);
+    }
+  }
+
+  return { gerenciador: novoGerenciador, ticketsRestaurados };
+}
+
 function criarServidor(opcoes = {}) {
   const diretorioDados = opcoes.diretorioDados ??
     process.env.ESTACIONAMENTO_DIR_DADOS ??
@@ -125,30 +181,25 @@ function criarServidor(opcoes = {}) {
   });
 
   httpApp.put('/api/configuracao', (req, res) => {
-    exigirCampo(
-      estacionamento.registroDeEntradasESaidas.ticketsAbertos.size === 0,
-      'não é possível alterar a configuração enquanto houver veículos estacionados',
-      409
-    );
-    exigirCampo(
-      !estacionamento.gerenciadorVagas ||
-        estacionamento.gerenciadorVagas.listarVagas({ status: 'bloqueada' }).length === 0,
-      'desbloqueie todas as vagas antes de alterar a configuração',
-      409
-    );
-
     const novaConfiguracao = new ConfiguracaoEstacionamento(req.body);
+    // Monta a nova distribuição sem tocar no estado ativo. Veículos e bloqueios
+    // são restaurados nas mesmas vagas; configurações incompatíveis são recusadas.
+    const preparado = prepararGerenciadorReconfigurado(estacionamento, novaConfiguracao);
+
     // Persiste antes de trocar a configuração em memória: falha de disco
     // mantém o estado anterior ativo.
     const persistida = ConfiguracaoJson.salvar(caminhoConfiguracao, novaConfiguracao);
-    const novoGerenciador = new GerenciadorVagas(persistida);
+    preparado.ticketsRestaurados.forEach(({ ticket, vagaId }) => {
+      ticket.vagaId = vagaId;
+    });
     estacionamento.configuracao = persistida;
-    estacionamento.gerenciadorVagas = novoGerenciador;
-    estacionamento.registroDeEntradasESaidas.gerenciadorVagas = novoGerenciador;
+    estacionamento.gerenciadorVagas = preparado.gerenciador;
+    estacionamento.registroDeEntradasESaidas.gerenciadorVagas = preparado.gerenciador;
 
     res.status(200).json({
-      mensagem: 'Configuração do estacionamento salva.',
+      mensagem: 'Configuração do estacionamento salva sem perder a ocupação atual.',
       configuracao: persistida.toJSON(),
+      veiculosPreservados: preparado.ticketsRestaurados.length,
     });
   });
 
