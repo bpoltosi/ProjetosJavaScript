@@ -111,6 +111,10 @@ async function executar() {
     assert.match(javascript, /state\.mapVisibleSlots = filtradas/);
     assert.match(javascript, /function processarNovosEventos/);
     assert.match(javascript, /function desenharAnimacoesTransito/);
+    assert.match(javascript, /const placasEmTransito = new Set\(state\.animacoesTransito/);
+    assert.match(javascript, /agora - animacao\.inicio < animacao\.duracao/);
+    assert.match(javascript, /placasEmTransito\.has\(caixa\.vaga\.placa\)/);
+    assert.match(javascript, /function desenharVaga\([\s\S]*?if \(!veiculoEmTransito\)[\s\S]*?desenharSprite/);
     assert.match(javascript, /function desenharRedeViaria/);
     assert.match(javascript, /function pintarPistaHorizontal/);
     assert.match(javascript, /function pintarPistaVertical/);

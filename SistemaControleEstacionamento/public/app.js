@@ -559,7 +559,7 @@
     ctx.fillText('RETORNO / SAÍDA', largura - 14, PISTA_Y + 24);
   }
 
-  function desenharVaga(ctx, vaga, caixa, selecionada, veiculo) {
+  function desenharVaga(ctx, vaga, caixa, selecionada, veiculo, veiculoEmTransito = false) {
     const status = vaga.status || 'livre';
     const centroX = caixa.x + caixa.w / 2;
     const centroY = caixa.y + caixa.h / 2 + 4;
@@ -579,12 +579,16 @@
     ctx.fillText(vaga.id, caixa.x + 6, caixa.y + 12, caixa.w - 12);
 
     if (status === 'ocupada') {
-      desenharSprite(ctx, veiculo || { tipoVeiculo: 'sedan', corVeiculo: '#A7ADB4' },
-        centroX, centroY + 2, caixa.w - 16, caixa.h - 20);
-      ctx.fillStyle = '#F0F5E8';
-      ctx.font = 'bold 7px "Lucida Console", monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(vaga.placa || 'OCUPADA', centroX, caixa.y + caixa.h - 5, caixa.w - 6);
+      // O backend já marcou a vaga como ocupada, mas o sprite só é fixado
+      // nela quando termina o percurso de entrada pela rede viária.
+      if (!veiculoEmTransito) {
+        desenharSprite(ctx, veiculo || { tipoVeiculo: 'sedan', corVeiculo: '#A7ADB4' },
+          centroX, centroY + 2, caixa.w - 16, caixa.h - 20);
+        ctx.fillStyle = '#F0F5E8';
+        ctx.font = 'bold 7px "Lucida Console", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(vaga.placa || 'OCUPADA', centroX, caixa.y + caixa.h - 5, caixa.w - 6);
+      }
     } else if (status === 'bloqueada') {
       ctx.strokeStyle = '#E98378';
       ctx.lineWidth = 4;
@@ -697,10 +701,19 @@
 
     state.mapHitBoxes = caixas;
     const veiculosPorPlaca = new Map(state.veiculos.map((veiculo) => [veiculo.placa, veiculo]));
+    const agora = performance.now();
+    // Enquanto o sprite percorre o circuito, não o desenhe também na vaga.
+    // A checagem usa o tempo real do frame para que ele apareça na baia
+    // exatamente no frame em que a animação termina, sem aguardar o polling.
+    const placasEmTransito = new Set(state.animacoesTransito
+      .filter((animacao) => animacao.acao !== 'bloqueada' && agora - animacao.inicio < animacao.duracao)
+      .map((animacao) => animacao.veiculo?.placa)
+      .filter(Boolean));
     caixas.forEach((caixa) => {
       const selecionada = state.selectedSlotId === caixa.vaga.id;
       const veiculo = caixa.vaga.placa ? veiculosPorPlaca.get(caixa.vaga.placa) : null;
-      desenharVaga(ctx, caixa.vaga, caixa, selecionada, veiculo);
+      const veiculoEmTransito = Boolean(caixa.vaga.placa && placasEmTransito.has(caixa.vaga.placa));
+      desenharVaga(ctx, caixa.vaga, caixa, selecionada, veiculo, veiculoEmTransito);
     });
 
     desenharAnimacoesTransito(ctx, largura);
