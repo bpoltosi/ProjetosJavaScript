@@ -44,7 +44,7 @@ async function executar() {
     assert.match(html, /<strong>POLTOSI PIXEL PARK<\/strong>/);
     assert.match(html, /value="Poltosi Pixel Park"/);
     assert.match(html, /CIRCUITO VIÁRIO · TODAS AS VAGAS/);
-    assert.match(html, /avenida, pistas de acesso/);
+    assert.match(html, /Avenida principal, corredor de entrada, pistas de acesso/i);
     assert.doesNotMatch(html, /mapPrevPage|mapNextPage|vacancyGrid|showAllVacanciesButton/);
     assert.match(html, /\/assets\/pixel-assets\.js/);
     assert.match(html, /\/styles\.css/);
