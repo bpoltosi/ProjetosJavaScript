@@ -27,7 +27,7 @@
         <div class="setup-header">
           <p class="eyebrow">CONFIGURAÇÃO INICIAL · PASSO 01</p>
           <h1 id="setupTitle">Prepare o seu estacionamento</h1>
-          <p class="muted">Defina a capacidade e distribua as vagas por categoria. As alterações serão validadas e persistidas pelo backend.</p>
+          <p class="muted">Defina a capacidade e distribua as vagas entre Estudante, Funcionário, Professor e Geral. É possível alterar a configuração sem retirar os veículos, desde que as vagas em uso sejam preservadas.</p>
         </div>
         <form id="configurationForm" class="setup-card">
           <div class="form-grid">
@@ -36,7 +36,7 @@
             <div class="capacity-readout"><span>VAGAS DISTRIBUÍDAS</span><strong id="distributionTotal">100 / 100</strong><div class="capacity-track"><span id="distributionBar"></span></div></div>
           </div>
           <div class="section-heading">
-            <div><p class="eyebrow">DISTRIBUIÇÃO</p><h2>Categorias de vagas</h2></div>
+            <div><p class="eyebrow">DISTRIBUIÇÃO</p><h2>Categorias de vagas</h2><p class="tiny muted">Escolha entre as quatro categorias predefinidas; cada uma pode usar uma cor da paleta.</p></div>
             <button id="addCategoryButton" class="button button-secondary button-small" type="button">+ ADICIONAR CATEGORIA</button>
           </div>
           <div id="categoryRows" class="category-rows"></div>
@@ -139,11 +139,14 @@
 
   <template id="categoryRowTemplate">
     <div class="category-row">
-      <label class="field"><span>ID</span><input data-field="id" type="text" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" maxlength="30" placeholder="geral" required></label>
-      <label class="field"><span>Nome</span><input data-field="nome" type="text" maxlength="40" placeholder="Geral" required></label>
-      <label class="field"><span>Quantidade</span><input data-field="quantidade" type="number" min="1" step="1" value="1" required></label>
-      <label class="field color-field"><span>Cor</span><input data-field="cor" type="color" value="#65a878"></label>
-      <label class="check-field accessible-field"><input data-field="acessibilidade" type="checkbox"><span>Requer acessibilidade</span></label>
+      <label class="field category-type-field"><span>Categoria</span><select data-field="id" required></select></label>
+      <label class="field category-quantity-field"><span>Quantidade de vagas</span><input data-field="quantidade" type="number" min="1" step="1" value="1" required></label>
+      <div class="field category-color-field">
+        <span>Cor de identificação</span>
+        <div class="color-palette" data-field="paleta" role="group" aria-label="Paleta de cores predefinidas"></div>
+        <input data-field="cor" type="hidden" value="#65A878">
+      </div>
+      <label class="check-field accessible-field"><input data-field="acessibilidade" type="checkbox"><span>Exige credencial de acessibilidade</span></label>
       <button class="icon-button remove-category" type="button" aria-label="Remover categoria">×</button>
     </div>
   </template>
