@@ -144,7 +144,37 @@ async function executar() {
       method: 'PUT',
       body: JSON.stringify({ ...configuracaoValida, nome: 'Outro nome' }),
     });
-    assert.equal(reconfigurarOcupado.resposta.status, 409);
+    assert.equal(reconfigurarOcupado.resposta.status, 200);
+    assert.equal(reconfigurarOcupado.dados.veiculosPreservados, 1);
+    const vagaPreservada = await requisitar(baseUrl, '/api/vagas?status=ocupada');
+    assert.equal(vagaPreservada.dados.vagas[0].id, 'GERAL-001');
+    assert.equal(vagaPreservada.dados.vagas[0].placa, 'WEB1A23');
+    console.log('✅ Reconfiguração compatível mantém o veículo estacionado na mesma vaga.');
+
+    const configuracaoIncompativel = {
+      ...configuracaoValida,
+      nome: 'Configuração incompatível',
+      categorias: [{
+        id: 'estudante',
+        nome: 'Estudante',
+        quantidade: 4,
+        cor: '#4D91D1',
+        criteriosElegibilidade: { categoriasCliente: ['estudante'] },
+      }],
+      perfisCliente: [{
+        ...configuracaoValida.perfisCliente[0],
+        categoriasVagaPermitidas: ['*'],
+      }],
+    };
+    const tentativaIncompativel = await requisitar(baseUrl, '/api/configuracao', {
+      method: 'PUT',
+      body: JSON.stringify(configuracaoIncompativel),
+    });
+    assert.equal(tentativaIncompativel.resposta.status, 409);
+    const configuracaoAtiva = await requisitar(baseUrl, '/api/configuracao');
+    assert.equal(configuracaoAtiva.dados.configuracao.nome, 'Outro nome');
+    assert.equal((await requisitar(baseUrl, '/api/vagas?status=ocupada')).dados.vagas[0].id, 'GERAL-001');
+    console.log('✅ Reconfiguração incompatível é recusada sem substituir a configuração ou perder a ocupação.');
 
     const saida = await requisitar(baseUrl, '/api/saidas', {
       method: 'POST',
@@ -158,6 +188,15 @@ async function executar() {
     const bloqueio = await requisitar(baseUrl, '/api/vagas/GERAL-002/bloquear', { method: 'POST' });
     assert.equal(bloqueio.resposta.status, 200);
     assert.equal(bloqueio.dados.vaga.status, 'bloqueada');
+
+    const reconfigurarComBloqueio = await requisitar(baseUrl, '/api/configuracao', {
+      method: 'PUT',
+      body: JSON.stringify({ ...configuracaoValida, nome: 'Configuração com bloqueio preservado' }),
+    });
+    assert.equal(reconfigurarComBloqueio.resposta.status, 200);
+    const bloqueiosPreservados = await requisitar(baseUrl, '/api/vagas?status=bloqueada');
+    assert.equal(bloqueiosPreservados.dados.vagas[0].id, 'GERAL-002');
+
     const desbloqueio = await requisitar(baseUrl, '/api/vagas/GERAL-002/desbloquear', { method: 'POST' });
     assert.equal(desbloqueio.resposta.status, 200);
     assert.equal(desbloqueio.dados.vaga.status, 'livre');
