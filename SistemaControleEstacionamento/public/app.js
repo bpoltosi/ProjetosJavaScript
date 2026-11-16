@@ -859,7 +859,16 @@
       };
 
       const vagaId = evento.vagaId || veiculoAtual?.vagaId || veiculoAnterior?.vagaId || null;
-      const caixa = state.mapHitBoxes.find((item) => item.vaga.id === vagaId);
+      let caixa = state.mapHitBoxes.find((item) => item.vaga.id === vagaId);
+
+      // Se o operador filtrou outro setor, reabre a planta completa para que
+      // a animação chegue à vaga real do evento, em vez de escolher uma vaga errada.
+      if (acao !== 'bloqueada' && !caixa && vagaId && $('#mapCategoryFilter')?.value) {
+        $('#mapCategoryFilter').value = '';
+        desenharMapa();
+        caixa = state.mapHitBoxes.find((item) => item.vaga.id === vagaId);
+      }
+
       let caminho;
       if (acao === 'entrada' && caixa) caminho = criarCaminhoEntrada(caixa);
       else if (acao === 'saida' && caixa) caminho = criarCaminhoSaida(caixa, largura);
@@ -870,17 +879,6 @@
         ];
       } else {
         return;
-      }
-
-      // Se o operador filtrou outro setor, reabre a planta completa para que
-      // a animação chegue à vaga real do evento, em vez de escolher uma vaga errada.
-      if (acao !== 'bloqueada' && !caixa && vagaId && $('#mapCategoryFilter')?.value) {
-        $('#mapCategoryFilter').value = '';
-        desenharMapa();
-        const caixaVisivel = state.mapHitBoxes.find((item) => item.vaga.id === vagaId);
-        if (acao === 'entrada' && caixaVisivel) caminho = criarCaminhoEntrada(caixaVisivel);
-        else if (acao === 'saida' && caixaVisivel) caminho = criarCaminhoSaida(caixaVisivel, largura);
-        else return;
       }
 
       state.animacoesTransito.push({
