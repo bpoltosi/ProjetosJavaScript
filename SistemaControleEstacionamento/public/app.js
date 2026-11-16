@@ -496,16 +496,17 @@
     const shell = $('#canvasShell');
     if (!canvas || !shell) return;
 
-    const largura = Math.max(320, Math.floor(shell.clientWidth - 4));
+    // Mantém uma planta larga também em telas estreitas; o contêiner permite rolagem horizontal.
+    const largura = Math.max(900, Math.floor(shell.clientWidth - 4));
     const filtradas = vagasDoMapa();
     state.mapVisibleSlots = filtradas;
     const grupos = agruparVagasPorCategoria(filtradas);
     const margem = 22;
-    const espacamentoX = 10;
-    const espacamentoY = 8;
-    const colunas = Math.max(3, Math.min(18, Math.floor((largura - margem * 2 + espacamentoX) / 76)));
-    const slotW = Math.max(46, Math.floor((largura - margem * 2 - espacamentoX * (colunas - 1)) / colunas));
-    const slotH = 70;
+    const espacamentoX = 4;
+    const espacamentoY = 4;
+    const colunas = Math.max(3, Math.min(48, Math.floor((largura - margem * 2 + espacamentoX) / 38)));
+    const slotW = Math.max(32, Math.floor((largura - margem * 2 - espacamentoX * (colunas - 1)) / colunas));
+    const slotH = 52;
     let cursorY = 105;
     const caixas = [];
 
@@ -516,14 +517,14 @@
       grupo.vagas.forEach((vaga, indice) => {
         const linha = Math.floor(indice / colunas);
         const coluna = indice % colunas;
-        const faixaCirculacao = Math.floor(linha / 2) * 20;
+        const faixaCirculacao = Math.floor(linha / 4) * 12;
         const y = cursorY + linha * (slotH + espacamentoY) + faixaCirculacao;
         const x = margem + coluna * (slotW + espacamentoX);
         caixas.push({ vaga, x, y, w: slotW, h: slotH, topoGrupo, grupoId: grupo.id });
       });
       const linhas = Math.ceil(grupo.vagas.length / colunas);
-      const faixasCirculacao = Math.floor(Math.max(0, linhas - 1) / 2);
-      cursorY += linhas * (slotH + espacamentoY) + faixasCirculacao * 20 + 24;
+      const faixasCirculacao = Math.floor(Math.max(0, linhas - 1) / 4);
+      cursorY += linhas * (slotH + espacamentoY) + faixasCirculacao * 12 + 24;
     });
 
     const altura = Math.max(320, cursorY + 16);
@@ -555,7 +556,7 @@
 
       const linhasGrupo = Array.from(new Set(caixasGrupo.map((caixa) => caixa.y))).sort((a, b) => a - b);
       for (let indiceLinha = 1; indiceLinha < linhasGrupo.length; indiceLinha += 1) {
-        if (indiceLinha % 2 !== 0) continue;
+        if (indiceLinha % 4 !== 0) continue;
         const faixaY = Math.floor((linhasGrupo[indiceLinha - 1] + slotH + linhasGrupo[indiceLinha]) / 2);
         ctx.fillStyle = '#182821';
         ctx.fillRect(12, faixaY - 5, largura - 24, 14);
