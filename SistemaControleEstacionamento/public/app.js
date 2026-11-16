@@ -614,7 +614,7 @@
     const esquerdaVagas = Math.min(...caixasGrupo.map((caixa) => caixa.x)) - 18;
     const direitaVagas = Math.max(...caixasGrupo.map((caixa) => caixa.x + caixa.w)) + 18;
     const topo = Math.min(...caixasGrupo.map((caixa) => caixa.y)) - 17;
-    const fundo = Math.max(...caixasGrupo.map((caixa) => caixa.y + caixa.h) + 12;
+    const fundo = Math.max(...caixasGrupo.map((caixa) => caixa.y + caixa.h)) + 12;
     const centroX = (esquerdaVagas + direitaVagas) / 2;
     const largura = Math.max(direitaVagas - esquerdaVagas, larguraMinima);
 
