@@ -6,6 +6,22 @@
     'motocicleta', 'compacto', 'hatch', 'sedan',
     'suv', 'picape', 'van', 'micro-onibus',
   ];
+  const CATEGORIAS_ESTACIONAMENTO = [
+    { id: 'estudante', nome: 'Estudante', corPadrao: '#4D91D1' },
+    { id: 'funcionario', nome: 'Funcionário', corPadrao: '#D6B34A' },
+    { id: 'professor', nome: 'Professor', corPadrao: '#8B78C5' },
+    { id: 'geral', nome: 'Geral', corPadrao: '#65A878' },
+  ];
+  const PALETA_CORES = [
+    { nome: 'Verde', valor: '#65A878' },
+    { nome: 'Azul', valor: '#4D91D1' },
+    { nome: 'Roxo', valor: '#8B78C5' },
+    { nome: 'Amarelo', valor: '#D6B34A' },
+    { nome: 'Laranja', valor: '#E58A45' },
+    { nome: 'Vermelho', valor: '#D66F78' },
+    { nome: 'Turquesa', valor: '#46A6A0' },
+    { nome: 'Cinza', valor: '#A7ADB4' },
+  ];
 
   const state = {
     configuracao: null,
@@ -83,29 +99,103 @@
     $('#currentDateLabel').textContent = agora.toLocaleDateString('pt-BR');
   }
 
+  function definirCorLinhaCategoria(linha, cor) {
+    const valor = String(cor).toUpperCase();
+    linha.querySelector('[data-field="cor"]').value = valor;
+    linha.querySelectorAll('.color-swatch').forEach((botao) => {
+      const selecionada = botao.dataset.color === valor;
+      botao.classList.toggle('is-selected', selecionada);
+      botao.setAttribute('aria-pressed', selecionada ? 'true' : 'false');
+    });
+  }
+
+  function sincronizarOpcoesCategorias() {
+    const linhas = Array.from($('#categoryRows').children);
+    const categoriasSelecionadas = new Set(
+      linhas.map((linha) => linha.querySelector('[data-field="id"]').value).filter(Boolean)
+    );
+
+    linhas.forEach((linha) => {
+      const seletor = linha.querySelector('[data-field="id"]');
+      Array.from(seletor.options).forEach((opcao) => {
+        opcao.disabled = Boolean(
+          opcao.value &&
+          opcao.value !== seletor.value &&
+          categoriasSelecionadas.has(opcao.value)
+        );
+      });
+    });
+
+    $('#addCategoryButton').disabled = linhas.length >= CATEGORIAS_ESTACIONAMENTO.length;
+  }
+
   function adicionarLinhaCategoria(dados = {}) {
+    const linhasAtuais = Array.from($('#categoryRows').children);
+    if (linhasAtuais.length >= CATEGORIAS_ESTACIONAMENTO.length) {
+      toast('Todas as categorias predefinidas já foram adicionadas.', 'warning');
+      return;
+    }
+
+    const categoriasEmUso = new Set(
+      linhasAtuais.map((linha) => linha.querySelector('[data-field="id"]').value)
+    );
+    const categoriaInicial = CATEGORIAS_ESTACIONAMENTO.find((categoria) =>
+      categoria.id === dados.id || !categoriasEmUso.has(categoria.id)
+    );
+    if (!categoriaInicial) return;
+
     const modelo = $('#categoryRowTemplate');
     const linha = modelo.content.firstElementChild.cloneNode(true);
-    linha.querySelector('[data-field="id"]').value = dados.id ?? '';
-    linha.querySelector('[data-field="nome"]').value = dados.nome ?? '';
+    const seletor = linha.querySelector('[data-field="id"]');
+
+    CATEGORIAS_ESTACIONAMENTO.forEach((categoria) => {
+      const opcao = document.createElement('option');
+      opcao.value = categoria.id;
+      opcao.textContent = categoria.nome;
+      seletor.append(opcao);
+    });
+    seletor.value = categoriaInicial.id;
+
     linha.querySelector('[data-field="quantidade"]').value = dados.quantidade ?? 1;
-    linha.querySelector('[data-field="cor"]').value = dados.cor ?? '#65a878';
     linha.querySelector('[data-field="acessibilidade"]').checked = dados.requerAcessibilidade === true;
 
-    linha.querySelectorAll('input').forEach((entrada) => {
-      entrada.addEventListener('input', atualizarDistribuicao);
-      entrada.addEventListener('change', atualizarDistribuicao);
+    const paleta = linha.querySelector('[data-field="paleta"]');
+    PALETA_CORES.forEach((cor) => {
+      const botao = document.createElement('button');
+      botao.type = 'button';
+      botao.className = 'color-swatch';
+      botao.dataset.color = cor.valor;
+      botao.style.setProperty('--swatch-color', cor.valor);
+      botao.title = `${cor.nome} ${cor.valor}`;
+      botao.setAttribute('aria-label', `${cor.nome}, ${cor.valor}`);
+      botao.setAttribute('aria-pressed', 'false');
+      botao.addEventListener('click', () => definirCorLinhaCategoria(linha, cor.valor));
+      paleta.append(botao);
     });
+
+    const categoriaSelecionada = CATEGORIAS_ESTACIONAMENTO.find((categoria) => categoria.id === seletor.value);
+    definirCorLinhaCategoria(linha, dados.cor ?? categoriaSelecionada.corPadrao);
+
+    seletor.addEventListener('change', () => {
+      const categoria = CATEGORIAS_ESTACIONAMENTO.find((item) => item.id === seletor.value);
+      if (categoria) definirCorLinhaCategoria(linha, categoria.corPadrao);
+      sincronizarOpcoesCategorias();
+    });
+    linha.querySelector('[data-field="quantidade"]').addEventListener('input', atualizarDistribuicao);
+    linha.querySelector('[data-field="quantidade"]').addEventListener('change', atualizarDistribuicao);
+
     linha.querySelector('.remove-category').addEventListener('click', () => {
       if ($('#categoryRows').children.length <= 1) {
         toast('O estacionamento precisa ter ao menos uma categoria de vaga.', 'warning');
         return;
       }
       linha.remove();
+      sincronizarOpcoesCategorias();
       atualizarDistribuicao();
     });
 
     $('#categoryRows').append(linha);
+    sincronizarOpcoesCategorias();
     atualizarDistribuicao();
   }
 
@@ -130,26 +220,26 @@
     }
 
     const categorias = Array.from($('#categoryRows').children).map((linha) => {
-      const id = linha.querySelector('[data-field="id"]').value.trim().toLowerCase();
-      const categoriaNome = linha.querySelector('[data-field="nome"]').value.trim();
+      const id = linha.querySelector('[data-field="id"]').value;
+      const categoriaBase = CATEGORIAS_ESTACIONAMENTO.find((categoria) => categoria.id === id);
       const quantidade = Number(linha.querySelector('[data-field="quantidade"]').value);
       const cor = linha.querySelector('[data-field="cor"]').value.toUpperCase();
       const requerAcessibilidade = linha.querySelector('[data-field="acessibilidade"]').checked;
 
-      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id)) {
-        throw new Error('O ID de cada categoria deve usar letras minúsculas, números e hífens.');
-      }
-      if (!categoriaNome) throw new Error(`Informe o nome da categoria "${id}".`);
+      if (!categoriaBase) throw new Error('Selecione uma das categorias predefinidas.');
       if (!Number.isSafeInteger(quantidade) || quantidade < 1) {
-        throw new Error(`A quantidade de vagas da categoria "${categoriaNome}" deve ser um inteiro positivo.`);
+        throw new Error(`A quantidade de vagas da categoria "${categoriaBase.nome}" deve ser um inteiro positivo.`);
       }
 
       return {
-        id,
-        nome: categoriaNome,
+        id: categoriaBase.id,
+        nome: categoriaBase.nome,
         quantidade,
         cor,
-        criteriosElegibilidade: { categoriasCliente: ['*'], requerAcessibilidade },
+        criteriosElegibilidade: {
+          categoriasCliente: id === 'geral' ? ['*'] : [id],
+          requerAcessibilidade,
+        },
         tiposVeiculoPermitidos: TIPOS_VEICULO,
         dimensoesMaximas: null,
       };
@@ -157,9 +247,7 @@
 
     if (categorias.length === 0) throw new Error('Adicione ao menos uma categoria de vagas.');
     const ids = categorias.map((categoria) => categoria.id);
-    if (new Set(ids).size !== ids.length) throw new Error('Os IDs das categorias não podem se repetir.');
-    const nomes = categorias.map((categoria) => categoria.nome.toLocaleLowerCase('pt-BR'));
-    if (new Set(nomes).size !== nomes.length) throw new Error('Os nomes das categorias não podem se repetir.');
+    if (new Set(ids).size !== ids.length) throw new Error('Escolha cada categoria predefinida apenas uma vez.');
 
     const soma = categorias.reduce((total, categoria) => total + categoria.quantidade, 0);
     if (soma !== capacidadeTotal) {
@@ -173,6 +261,7 @@
       categorias,
       perfisCliente: [
         { id: 'estudante', nome: 'Estudante', classeDominio: 'estudante', limitePlacas: 1, categoriasVagaPermitidas: ['*'] },
+        { id: 'funcionario', nome: 'Funcionário', classeDominio: 'personalizado', limitePlacas: 2, categoriasVagaPermitidas: ['*'] },
         { id: 'professor', nome: 'Professor', classeDominio: 'professor', limitePlacas: 2, categoriasVagaPermitidas: ['*'] },
         { id: 'empresa', nome: 'Empresa', classeDominio: 'empresa', limitePlacas: null, categoriasVagaPermitidas: ['*'] },
       ],
@@ -967,8 +1056,7 @@
     atualizarRelogio();
     window.setInterval(atualizarRelogio, 1000);
     registrarEventos();
-    adicionarLinhaCategoria({ id: 'geral', nome: 'Geral', quantidade: 80, cor: '#65a878' });
-    adicionarLinhaCategoria({ id: 'acessivel', nome: 'Acessível', quantidade: 20, cor: '#e0b33f', requerAcessibilidade: true });
+    adicionarLinhaCategoria({ id: 'geral', quantidade: 100, cor: '#65A878' });
 
     try {
       const health = await api('GET', '/api/health');
