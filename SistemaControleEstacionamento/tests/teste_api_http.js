@@ -161,6 +161,10 @@ async function executar() {
         cor: '#4D91D1',
         criteriosElegibilidade: { categoriasCliente: ['estudante'] },
       }],
+      perfisCliente: [{
+        ...configuracaoValida.perfisCliente[0],
+        categoriasVagaPermitidas: ['*'],
+      }],
     };
     const tentativaIncompativel = await requisitar(baseUrl, '/api/configuracao', {
       method: 'PUT',
