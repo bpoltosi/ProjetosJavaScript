@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#13201e">
-  <title>Estacionamento — Painel operacional</title>
+  <title>Poltosi Pixel Park — Painel operacional</title>
   <link rel="stylesheet" href="/styles.css">
   <script src="/assets/pixel-assets.js" defer></script>
   <script src="/app.js" defer></script>
@@ -12,9 +12,9 @@
 <body>
   <div class="app-frame">
     <header class="topbar">
-      <a class="brand" href="/" aria-label="Painel do estacionamento">
+      <a class="brand" href="/" aria-label="Painel Poltosi Pixel Park">
         <span class="brand-mark" aria-hidden="true">P</span>
-        <span><strong>PIXEL PARK</strong><small>CONTROLE OPERACIONAL</small></span>
+        <span><strong>POLTOSI PIXEL PARK</strong><small>CONTROLE OPERACIONAL</small></span>
       </a>
       <div class="topbar-right">
         <span id="connectionStatus" class="status-chip status-waiting"><span class="status-light"></span> CONECTANDO</span>
@@ -31,7 +31,7 @@
         </div>
         <form id="configurationForm" class="setup-card">
           <div class="form-grid">
-            <label class="field field-wide"><span>Nome do estabelecimento</span><input id="parkingName" name="nome" type="text" maxlength="80" value="Pixel Park" required></label>
+            <label class="field field-wide"><span>Nome do estabelecimento</span><input id="parkingName" name="nome" type="text" maxlength="80" value="Poltosi Pixel Park" required></label>
             <label class="field"><span>Capacidade total de vagas</span><input id="parkingCapacity" name="capacidadeTotal" type="number" min="1" max="10000" step="1" value="100" required></label>
             <div class="capacity-readout"><span>VAGAS DISTRIBUÍDAS</span><strong id="distributionTotal">100 / 100</strong><div class="capacity-track"><span id="distributionBar"></span></div></div>
           </div>
@@ -50,7 +50,7 @@
 
       <section id="dashboardView" class="dashboard-view hidden" aria-label="Painel operacional">
         <div class="page-heading">
-          <div><p class="eyebrow">CENTRAL DE OPERAÇÕES / <span id="currentDateLabel">--/--/----</span></p><h1 id="parkingTitle">PIXEL PARK</h1><p class="muted">Estado do estacionamento sincronizado com o backend.</p></div>
+          <div><p class="eyebrow">CENTRAL DE OPERAÇÕES / <span id="currentDateLabel">--/--/----</span></p><h1 id="parkingTitle">POLTOSI PIXEL PARK</h1><p class="muted">Estado do estacionamento sincronizado com o backend.</p></div>
           <div class="page-actions"><span id="simStatus" class="status-chip status-idle">SIMULAÇÃO PARADA</span><button id="refreshButton" class="button button-secondary button-small" type="button">↻ ATUALIZAR</button></div>
         </div>
 
@@ -87,13 +87,13 @@
               </div>
             </div>
             <div class="map-toolbar">
-              <span class="map-toolbar-label">PLANTA COMPLETA · TODAS AS VAGAS</span>
+              <span class="map-toolbar-label">CIRCUITO VIÁRIO · TODAS AS VAGAS</span>
               <label class="map-filter"><span>SETOR</span><select id="mapCategoryFilter"><option value="">TODAS</option></select></label>
             </div>
             <div id="canvasShell" class="canvas-shell">
-              <canvas id="parkingCanvas" width="1280" height="560" role="img" aria-label="Planta panorâmica do estacionamento com todas as vagas reais e veículos em movimento">Seu navegador não oferece suporte ao Canvas 2D.</canvas>
+              <canvas id="parkingCanvas" width="1280" height="560" role="img" aria-label="Planta do Poltosi Pixel Park com avenidas, pistas de acesso, vagas e veículos em movimento">Seu navegador não oferece suporte ao Canvas 2D.</canvas>
             </div>
-            <p id="mapCaption" class="map-caption">Cada posição corresponde a uma vaga real. Vagas livres ficam sem veículo; carros ocupam sua posição e bloqueios recebem sinalização.</p>
+            <p id="mapCaption" class="map-caption">Avenida principal, corredor de entrada, pistas de acesso a cada fileira e corredor de saída formam um circuito contínuo. Os carros seguem esse trajeto até a manobra de estacionamento.</p>
             <div class="yard-footer"><span id="vacancySummary" class="tiny muted">Aguardando dados do estacionamento...</span><span class="tiny muted">FLUXO AO VIVO · API</span></div>
             <section class="control-room" aria-label="Guarita e terminal operacional">
               <div class="security-guard">
@@ -162,7 +162,7 @@
 
         </section>
 
-        <footer class="footer-bar"><span>PIXEL PARK / PAINEL OPERACIONAL</span><span id="lastUpdatedLabel">Última atualização: --</span><a href="/api/health" target="_blank" rel="noreferrer">STATUS DA API ↗</a></footer>
+        <footer class="footer-bar"><span>POLTOSI PIXEL PARK / PAINEL OPERACIONAL</span><span id="lastUpdatedLabel">Última atualização: --</span><a href="/api/health" target="_blank" rel="noreferrer">STATUS DA API ↗</a></footer>
       </section>
     </main>
     <div id="toastRegion" class="toast-region" role="status" aria-live="polite"></div>
