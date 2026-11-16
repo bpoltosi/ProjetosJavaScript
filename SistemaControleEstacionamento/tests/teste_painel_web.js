@@ -116,7 +116,7 @@ async function executar() {
     assert.match(javascript, /placasEmTransito\.has\(caixa\.vaga\.placa\)/);
     assert.match(javascript, /function desenharVaga\([\s\S]*?if \(!veiculoEmTransito\)[\s\S]*?desenharSprite/);
     assert.match(javascript, /function calcularLimitesMolduraGrupo/);
-    assert.match(javascript, /calcularLimitesMolduraGrupo\(caixasGrupo\)/);
+    assert.match(javascript, /calcularLimitesMolduraGrupo\(caixasGrupo, setor\.largura\)/);
     assert.match(javascript, /ctx\.fillRect\(moldura\.x, moldura\.y, moldura\.largura, moldura\.altura\)/);
     const inicioHelperMoldura = javascript.indexOf('function calcularLimitesMolduraGrupo');
     const fechamentoHelperMoldura = javascript.indexOf(String.fromCharCode(10) + '  }', inicioHelperMoldura);
@@ -135,6 +135,58 @@ async function executar() {
       { x: 292, y: 144, w: 36, h: 50 },
     ]);
     assert.equal(molduraDuasColunas.largura, 112, 'a largura deve acompanhar as colunas efetivamente ocupadas');
+    assert.equal(calcularLimitesMolduraGrupo([{ x: 252, y: 144, w: 36, h: 50 }], 180).largura, 180,
+      'o título também deve ter espaço dentro da moldura sem esticar o setor até a largura do mapa');
+
+    assert.match(javascript, /function calcularLayoutSetores/);
+    assert.match(javascript, /const layout = calcularLayoutSetores\(grupos, largura, slotW\)/);
+    const inicioLayoutSetores = javascript.indexOf('function calcularLayoutSetores');
+    const fimLayoutSetores = javascript.indexOf(String.fromCharCode(10) + '  }', inicioLayoutSetores);
+    assert.ok(inicioLayoutSetores >= 0 && fimLayoutSetores > inicioLayoutSetores);
+    const helperLayoutSetores = javascript.slice(inicioLayoutSetores, fimLayoutSetores + 4);
+    const calcularLayoutSetores = vm.runInNewContext('(' + helperLayoutSetores + ')', {
+      MARGEM_VAGAS_ESQUERDA: 252,
+      MARGEM_VAGAS_DIREITA: 84,
+      PASSO_FILEIRA: 98,
+      ALTURA_VAGA: 50,
+    });
+    const gruposCompactos = ['FUNCIONARIO', 'GERAL', 'PROFESSOR'].map((nome, indice) => ({
+      id: 'compacto-' + indice,
+      nome,
+      vagas: [{ id: 'VAGA-' + indice }],
+    }));
+    const layoutCompacto = calcularLayoutSetores(gruposCompactos, 1120, 35);
+    assert.equal(layoutCompacto.setores.length, 3);
+    assert.equal(layoutCompacto.setores[0].indiceLinha, 0);
+    assert.equal(layoutCompacto.setores[1].indiceLinha, 0);
+    assert.equal(layoutCompacto.setores[2].indiceLinha, 0,
+      'categorias pequenas devem compartilhar a mesma linha');
+    assert.ok(layoutCompacto.setores[2].x > layoutCompacto.setores[1].x);
+    assert.equal(layoutCompacto.faixasRodagem.length, 1,
+      'setores na mesma linha devem compartilhar uma única pista de acesso');
+    assert.ok(layoutCompacto.setores[0].largura < 340,
+      'setores com poucas vagas devem manter molduras compactas');
+
+    const gruposParaQuebra = Array.from({ length: 5 }, (_, indice) => ({
+      id: 'quebra-' + indice,
+      nome: 'CATEGORIA ' + indice,
+      vagas: [{ id: 'VAGA-' + indice }],
+    }));
+    const layoutComQuebra = calcularLayoutSetores(gruposParaQuebra, 1120, 35);
+    assert.equal(layoutComQuebra.setores[0].indiceLinha, 0);
+    assert.equal(layoutComQuebra.setores[3].indiceLinha, 0);
+    assert.equal(layoutComQuebra.setores[4].indiceLinha, 1,
+      'quando não houver espaço, a próxima categoria deve ir para a linha seguinte');
+
+    const layoutCategoriaGrande = calcularLayoutSetores([{
+      id: 'grande',
+      nome: 'GERAL',
+      vagas: Array.from({ length: 20 }, (_, indice) => ({ id: 'GERAL-' + indice })),
+    }], 1120, 35);
+    assert.equal(layoutCategoriaGrande.setores[0].colunas, 7);
+    assert.equal(layoutCategoriaGrande.setores[0].linhas, 3);
+    assert.equal(layoutCategoriaGrande.faixasRodagem.length, 3,
+      'categorias que precisam de mais fileiras devem receber uma pista por fileira');
     assert.match(javascript, /function desenharRedeViaria/);
     assert.match(javascript, /function pintarPistaHorizontal/);
     assert.match(javascript, /function pintarPistaVertical/);
