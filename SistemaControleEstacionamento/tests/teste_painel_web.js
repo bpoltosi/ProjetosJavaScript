@@ -27,6 +27,9 @@ async function executar() {
     assert.match(html, /id="setupView"/);
     assert.match(html, /id="dashboardView"/);
     assert.match(html, /id="configurationForm"/);
+    assert.match(html, /data-field="id"/);
+    assert.match(html, /class="color-palette"/);
+    assert.doesNotMatch(html, /type="color"/);
     assert.match(html, /id="entryForm"/);
     assert.match(html, /id="exitForm"/);
     assert.match(html, /id="generationForm"/);
@@ -53,6 +56,8 @@ async function executar() {
     assert.match(css, /\.canvas-shell/);
     assert.match(css, /image-rendering: pixelated/);
     assert.match(css, /\.map-pagination/);
+    assert.match(css, /\.color-palette/);
+    assert.match(css, /\.color-swatch/);
     console.log('✅ Folha de estilos é servida com identidade pixel art e layout responsivo.');
 
     const jsResposta = await fetch(`${baseUrl}/app.js`);
@@ -87,6 +92,11 @@ async function executar() {
     assert.match(javascript, /mapHitBoxes/);
     assert.match(javascript, /selecionarVagaNoMapa/);
     assert.match(javascript, /micro-onibus/);
+    for (const categoria of ['Estudante', 'Funcionário', 'Professor', 'Geral']) {
+      assert.ok(javascript.includes(categoria), `frontend deve oferecer a categoria ${categoria}`);
+    }
+    assert.match(javascript, /PALETA_CORES/);
+    assert.match(javascript, /sincronizarOpcoesCategorias/);
     assert.match(javascript, /mapPageSize: 80/);
     assert.match(javascript, /ParkingPixelAssets/);
     assert.doesNotMatch(javascript, /react-dom|createRoot\(|new Phaser\./i);
