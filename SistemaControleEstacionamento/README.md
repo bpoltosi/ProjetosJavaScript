@@ -178,7 +178,7 @@ O encerramento do servidor também encerra a simulação e salva o estado operac
 
 ### Mapa top-down em Canvas 2D
 
-O painel web apresenta o mapa top-down ortográfico no Canvas 2D. Cada posição representa
+O painel web do Poltosi Pixel Park apresenta o mapa top-down ortográfico no Canvas 2D. Cada posição representa
 uma vaga retornada por `GET /api/vagas`; não existem vagas simuladas apenas na camada visual.
 Os setores usam suas categorias e cores configuradas. O desenho reflete os estados livre,
 ocupado e bloqueado, e consulta `GET /api/veiculos/estacionados` para posicionar os veículos
@@ -189,19 +189,22 @@ Os sprites dos veículos são pixel art original e ficam separados do renderizad
 hatch, sedan, SUV, picape, van e micro-ônibus) e a paleta/tiles do cenário. O Canvas desativa
 suavização de imagem para preservar bordas nítidas.
 
-O mapa apresenta todas as vagas em uma única planta panorâmica, sem paginação nem uma segunda grade
-repetindo os estados. A pintura das vagas não usa fundos coloridos para livre/ocupada: a posição vazia
-representa uma vaga livre, o sprite do veículo representa ocupação e a sinalização vermelha identifica
-bloqueios. O filtro por categoria foca um setor; clique numa vaga ou veículo para consultar os detalhes.
+O Poltosi Pixel Park apresenta todas as vagas em uma única planta panorâmica. O circuito viário tem
+avenida principal, guarita/cancela, corredor de entrada, pistas horizontais de acesso a cada fileira e
+um corredor de retorno que conduz à saída. A circulação é de mão única: os carros entram pela esquerda,
+percorrem a pista da fileira correspondente e só deixam o asfalto na manobra final para estacionar.
+Na saída, retornam à pista da fileira, seguem até o corredor da direita e sobem até a avenida principal.
 
-Novas entradas autorizadas, saídas concluídas e tentativas de entrada negadas geram animações no próprio
-pátio. Os movimentos são disparados pelos eventos reais recebidos da API, não por uma camada visual
-independente. A guarita do fiscal e o terminal operacional ficam em uma área reservada junto ao mapa,
-com o histórico persistente de eventos. A simulação web inicia por padrão com 60 veículos na frota e
-intervalo reduzido entre chegadas; o tamanho da frota pode ser ajustado no painel.
+A planta não usa fundos coloridos para livre/ocupada: a posição vazia representa uma vaga livre, o sprite
+do veículo representa ocupação e a sinalização vermelha identifica bloqueios. O filtro por categoria
+foca um setor; clique numa vaga ou veículo para consultar os detalhes. As animações são acionadas por
+eventos reais da API e percorrem os mesmos corredores desenhados no mapa, inclusive nas saídas e nas
+tentativas barradas. A guarita do fiscal e o terminal operacional permanecem integrados ao pátio.
+A simulação web inicia por padrão com 60 veículos na frota e intervalo de 1,6 segundo entre chegadas;
+o tamanho da frota pode ser ajustado no painel.
 
 Arquivos principais:
-- `public/app.js`: sincronização HTTP, planta completa, seleção e animações de trânsito.
+- `public/app.js`: sincronização HTTP, circuito de estradas, planta completa e rotas animadas.
 - `public/assets/pixel-assets.js`: sprites, cores e padrões de pixel art.
 - `public/styles.css`: moldura responsiva e tratamento pixelated do Canvas.
 
