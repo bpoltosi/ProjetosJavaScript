@@ -362,7 +362,8 @@ select { appearance: auto; }
 }
 #parkingCanvas {
   display: block;
-  width: 100%;
+  width: auto;
+  max-width: none;
   min-height: 260px;
   height: auto;
   image-rendering: pixelated;
