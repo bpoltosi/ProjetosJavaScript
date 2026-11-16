@@ -40,8 +40,7 @@ async function executar() {
     assert.match(html, /id="startSimulationButton"/);
     assert.match(html, /id="parkingCanvas"/);
     assert.match(html, /id="mapCategoryFilter"/);
-    assert.match(html, /id="mapPrevPage"/);
-    assert.match(html, /id="mapNextPage"/);
+    assert.doesNotMatch(html, /mapPrevPage|mapNextPage|vacancyGrid|showAllVacanciesButton/);
     assert.match(html, /\/assets\/pixel-assets\.js/);
     assert.match(html, /\/styles\.css/);
     assert.match(html, /\/app\.js/);
@@ -58,7 +57,6 @@ async function executar() {
     assert.match(css, /\.event-terminal/);
     assert.match(css, /\.canvas-shell/);
     assert.match(css, /image-rendering: pixelated/);
-    assert.match(css, /\.map-pagination/);
     assert.match(css, /\.control-room/);
     assert.match(css, /\.security-guard/);
     assert.match(css, /grid-template-areas: "actions yard"/);
