@@ -80,28 +80,68 @@
           </article>
 
           <article class="panel yard-panel">
-            <div class="panel-heading"><div><p class="eyebrow">PÁTIO / DADOS REAIS</p><h2>Vagas do estacionamento</h2></div><span class="legend-inline"><i class="legend-free"></i> Livre <i class="legend-occupied"></i> Ocupada <i class="legend-blocked"></i> Bloqueada</span></div>
+            <div class="panel-heading yard-heading">
+              <div><p class="eyebrow">PÁTIO / VISÃO INTEGRADA</p><h2>Estacionamento em tempo real</h2></div>
+              <div class="legend-inline" aria-label="Legenda de ocupação">
+                <span>VAGA VAZIA · LIVRE</span><span>VEÍCULO · OCUPADA</span><span class="legend-blocked-label">✕ BLOQUEADA</span>
+              </div>
+            </div>
             <div class="map-toolbar">
-              <span class="map-toolbar-label">VISÃO TOP-DOWN · CANVAS 2D</span>
-              <label class="map-filter"><span>CATEGORIA</span><select id="mapCategoryFilter"><option value="">TODAS</option></select></label>
-              <div class="map-pagination">
-                <button id="mapPrevPage" class="icon-button map-page-button" type="button" aria-label="Página anterior">‹</button>
-                <span id="mapPageLabel">PÁGINA 1 / 1</span>
-                <button id="mapNextPage" class="icon-button map-page-button" type="button" aria-label="Próxima página">›</button>
+              <span class="map-toolbar-label">PLANTA COMPLETA · TODAS AS VAGAS</span>
+              <label class="map-filter"><span>SETOR</span><select id="mapCategoryFilter"><option value="">TODAS</option></select></label>
+              <div class="map-pagination" aria-hidden="true">
+                <button id="mapPrevPage" class="icon-button map-page-button" type="button" tabindex="-1">‹</button>
+                <span id="mapPageLabel">VISÃO COMPLETA</span>
+                <button id="mapNextPage" class="icon-button map-page-button" type="button" tabindex="-1">›</button>
               </div>
             </div>
             <div id="canvasShell" class="canvas-shell">
-              <canvas id="parkingCanvas" width="880" height="360" role="img" aria-label="Mapa top-down do estacionamento com vagas reais">Seu navegador não oferece suporte ao Canvas 2D.</canvas>
+              <canvas id="parkingCanvas" width="1280" height="560" role="img" aria-label="Planta panorâmica do estacionamento com todas as vagas reais e veículos em movimento">Seu navegador não oferece suporte ao Canvas 2D.</canvas>
             </div>
-            <p id="mapCaption" class="map-caption">Cada vaga no mapa corresponde a um identificador persistido no backend. Clique em uma vaga para ver seus dados.</p>
-            <div id="vacancyGrid" class="vacancy-grid" aria-label="Resumo das vagas reais do backend"><p class="empty-state">Carregando vagas...</p></div>
-            <div class="yard-footer"><span id="vacancySummary" class="tiny muted">Aguardando dados...</span><button id="showAllVacanciesButton" class="text-button" type="button">VER TODAS</button></div>
+            <p id="mapCaption" class="map-caption">Cada posição corresponde a uma vaga real. Vagas livres ficam sem veículo; carros ocupam sua posição e bloqueios recebem sinalização.</p>
+            <div class="yard-footer"><span id="vacancySummary" class="tiny muted">Aguardando dados do estacionamento...</span><span class="tiny muted">FLUXO AO VIVO · API</span></div>
+            <section class="control-room" aria-label="Guarita e terminal operacional">
+              <div class="security-guard">
+                <div class="guard-portrait">
+                  <svg viewBox="0 0 72 88" role="img" aria-label="Personagem fiscal de segurança do estacionamento" shape-rendering="crispEdges">
+                    <rect x="17" y="5" width="38" height="9" fill="#1b2825"/>
+                    <rect x="11" y="12" width="50" height="7" fill="#d7b45d"/>
+                    <rect x="19" y="19" width="34" height="26" fill="#d8a57d"/>
+                    <rect x="25" y="28" width="5" height="5" fill="#26352e"/>
+                    <rect x="43" y="28" width="5" height="5" fill="#26352e"/>
+                    <rect x="31" y="38" width="11" height="3" fill="#70483b"/>
+                    <rect x="13" y="44" width="46" height="29" fill="#47745a"/>
+                    <rect x="20" y="47" width="32" height="21" fill="#5e906d"/>
+                    <rect x="29" y="49" width="12" height="10" fill="#e9ca72"/>
+                    <rect x="32" y="51" width="6" height="6" fill="#4a644e"/>
+                    <rect x="5" y="47" width="9" height="22" fill="#d8a57d"/>
+                    <rect x="58" y="47" width="9" height="22" fill="#d8a57d"/>
+                    <rect x="18" y="72" width="15" height="12" fill="#263b37"/>
+                    <rect x="39" y="72" width="15" height="12" fill="#263b37"/>
+                    <rect x="14" y="83" width="20" height="4" fill="#15221f"/>
+                    <rect x="38" y="83" width="20" height="4" fill="#15221f"/>
+                    <rect x="49" y="52" width="5" height="11" fill="#263b37"/>
+                  </svg>
+                </div>
+                <strong>FISCAL DO PÁTIO</strong>
+                <span>GUARITA · TURNO ATIVO</span>
+                <small id="securityGuardStatus" class="guard-status">AGUARDANDO MOVIMENTO</small>
+              </div>
+              <div class="control-terminal">
+                <div class="terminal-heading">
+                  <div><p class="eyebrow">MONITORAMENTO / EVENTOS DO BACKEND</p><h3>Terminal operacional</h3></div>
+                  <span id="terminalCount" class="tiny muted">0 EVENTOS</span>
+                </div>
+                <div id="eventTerminal" class="event-terminal" aria-live="polite"><p class="empty-state">Aguardando eventos do estacionamento...</p></div>
+              </div>
+            </section>
           </article>
 
           <article class="panel simulation-panel">
             <div class="panel-heading"><div><p class="eyebrow">FLUXO AUTOMATIZADO</p><h2>Simulador</h2></div><span class="panel-icon" aria-hidden="true">◷</span></div>
             <div class="simulation-state"><span id="simulationStateDot" class="state-dot"></span><strong id="simulationStateText">PARADO</strong><span id="simulationSpeedLabel" class="speed-tag">1×</span></div>
             <div class="sim-stats"><div><span>ENTRADAS</span><strong id="simEntryCount">0</strong></div><div><span>NEGADAS</span><strong id="simDeniedCount">0</strong></div><div><span>SAÍDAS</span><strong id="simExitCount">0</strong></div></div>
+            <label class="field"><span>Veículos na frota</span><input id="simulationFleetSize" type="number" min="1" max="500" value="60" required></label>
             <label class="field"><span>Velocidade</span><select id="simulationSpeed"><option value="1">1× · Normal</option><option value="2">2× · Rápida</option><option value="5">5× · Turbo</option></select></label>
             <div class="sim-buttons"><button id="startSimulationButton" class="button button-primary" type="button">INICIAR</button><button id="pauseSimulationButton" class="button button-secondary" type="button">PAUSAR</button><button id="resumeSimulationButton" class="button button-secondary" type="button">RETOMAR</button><button id="stopSimulationButton" class="button button-danger" type="button">ENCERRAR</button></div>
             <p id="simulationMessage" class="tiny muted">A simulação usa os serviços reais de entrada e saída.</p>
@@ -125,10 +165,6 @@
             <div id="selectedVehicleDetails" class="details-content"><p class="empty-state">Selecione um veículo estacionado para ver seus detalhes.</p></div>
           </article>
 
-          <article class="panel terminal-panel">
-            <div class="panel-heading"><div><p class="eyebrow">EVENTOS DO BACKEND</p><h2>Terminal operacional</h2></div><span id="terminalCount" class="tiny muted">0 EVENTOS</span></div>
-            <div id="eventTerminal" class="event-terminal" aria-live="polite"><p class="empty-state">Aguardando eventos do estacionamento...</p></div>
-          </article>
         </section>
 
         <footer class="footer-bar"><span>PIXEL PARK / PAINEL OPERACIONAL</span><span id="lastUpdatedLabel">Última atualização: --</span><a href="/api/health" target="_blank" rel="noreferrer">STATUS DA API ↗</a></footer>
