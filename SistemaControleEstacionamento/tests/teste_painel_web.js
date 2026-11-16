@@ -97,6 +97,8 @@ async function executar() {
     }
     assert.match(javascript, /PALETA_CORES/);
     assert.match(javascript, /sincronizarOpcoesCategorias/);
+    assert.match(javascript, /categoriasDoPerfil/);
+    assert.match(javascript, /idsCategoriasConfiguradas\.has\('geral'\)/);
     assert.match(javascript, /mapPageSize: 80/);
     assert.match(javascript, /ParkingPixelAssets/);
     assert.doesNotMatch(javascript, /react-dom|createRoot\(|new Phaser\./i);
