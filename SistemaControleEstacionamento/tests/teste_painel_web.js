@@ -115,6 +115,26 @@ async function executar() {
     assert.match(javascript, /agora - animacao\.inicio < animacao\.duracao/);
     assert.match(javascript, /placasEmTransito\.has\(caixa\.vaga\.placa\)/);
     assert.match(javascript, /function desenharVaga\([\s\S]*?if \(!veiculoEmTransito\)[\s\S]*?desenharSprite/);
+    assert.match(javascript, /function calcularLimitesMolduraGrupo/);
+    assert.match(javascript, /calcularLimitesMolduraGrupo\(caixasGrupo\)/);
+    assert.match(javascript, /ctx\.fillRect\(moldura\.x, moldura\.y, moldura\.largura, moldura\.altura\)/);
+    const inicioHelperMoldura = javascript.indexOf('function calcularLimitesMolduraGrupo');
+    const fimHelperMoldura = javascript.indexOf('\\n  }', inicioHelperMoldura) + 4;
+    const calcularLimitesMolduraGrupo = vm.runInNewContext(
+      '(' + javascript.slice(inicioHelperMoldura, fimHelperMoldura) + ')'
+    );
+    const molduraUmaVaga = calcularLimitesMolduraGrupo([
+      { x: 252, y: 144, w: 36, h: 50 },
+    ]);
+    assert.equal(molduraUmaVaga.x, 234);
+    assert.equal(molduraUmaVaga.largura, 72, 'uma vaga deve ter moldura compacta, não a largura total do mapa');
+    assert.equal(molduraUmaVaga.y, 127);
+    assert.equal(molduraUmaVaga.altura, 79);
+    const molduraDuasColunas = calcularLimitesMolduraGrupo([
+      { x: 252, y: 144, w: 36, h: 50 },
+      { x: 292, y: 144, w: 36, h: 50 },
+    ]);
+    assert.equal(molduraDuasColunas.largura, 112, 'a largura deve acompanhar as colunas efetivamente ocupadas');
     assert.match(javascript, /function desenharRedeViaria/);
     assert.match(javascript, /function pintarPistaHorizontal/);
     assert.match(javascript, /function pintarPistaVertical/);
