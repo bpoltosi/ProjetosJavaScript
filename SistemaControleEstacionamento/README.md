@@ -189,14 +189,19 @@ Os sprites dos veículos são pixel art original e ficam separados do renderizad
 hatch, sedan, SUV, picape, van e micro-ônibus) e a paleta/tiles do cenário. O Canvas desativa
 suavização de imagem para preservar bordas nítidas.
 
-Para estacionamentos com muitas vagas, o mapa apresenta blocos paginados. O filtro por categoria
-permite focar um setor; clique numa vaga para selecionar o slot e consultar seu estado, ou num
-veículo para abrir detalhes de placa, tipo, cor, cliente, categoria, vaga e horário de entrada.
-A seleção não altera o estado de negócio: entradas, saídas e bloqueios continuam sendo
-executados exclusivamente pelos endpoints do backend.
+O mapa apresenta todas as vagas em uma única planta panorâmica, sem paginação nem uma segunda grade
+repetindo os estados. A pintura das vagas não usa fundos coloridos para livre/ocupada: a posição vazia
+representa uma vaga livre, o sprite do veículo representa ocupação e a sinalização vermelha identifica
+bloqueios. O filtro por categoria foca um setor; clique numa vaga ou veículo para consultar os detalhes.
+
+Novas entradas autorizadas, saídas concluídas e tentativas de entrada negadas geram animações no próprio
+pátio. Os movimentos são disparados pelos eventos reais recebidos da API, não por uma camada visual
+independente. A guarita do fiscal e o terminal operacional ficam em uma área reservada junto ao mapa,
+com o histórico persistente de eventos. A simulação web inicia por padrão com 60 veículos na frota e
+intervalo reduzido entre chegadas; o tamanho da frota pode ser ajustado no painel.
 
 Arquivos principais:
-- `public/app.js`: sincronização HTTP, paginação, seleção e renderização do mapa.
+- `public/app.js`: sincronização HTTP, planta completa, seleção e animações de trânsito.
 - `public/assets/pixel-assets.js`: sprites, cores e padrões de pixel art.
 - `public/styles.css`: moldura responsiva e tratamento pixelated do Canvas.
 
