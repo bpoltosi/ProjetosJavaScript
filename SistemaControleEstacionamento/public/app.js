@@ -610,6 +610,20 @@
     ctx.restore();
   }
 
+  function calcularLimitesMolduraGrupo(caixasGrupo) {
+    const esquerda = Math.min(...caixasGrupo.map((caixa) => caixa.x)) - 18;
+    const direita = Math.max(...caixasGrupo.map((caixa) => caixa.x + caixa.w)) + 18;
+    const topo = Math.min(...caixasGrupo.map((caixa) => caixa.y)) - 17;
+    const fundo = Math.max(...caixasGrupo.map((caixa) => caixa.y + caixa.h)) + 12;
+
+    return {
+      x: esquerda,
+      y: topo,
+      largura: direita - esquerda,
+      altura: fundo - topo,
+    };
+  }
+
   function desenharMapa() {
     const canvas = $('#parkingCanvas');
     const shell = $('#canvasShell');
@@ -677,23 +691,22 @@
     grupos.forEach((grupo) => {
       const caixasGrupo = caixas.filter((caixa) => caixa.grupoId === grupo.id);
       if (!caixasGrupo.length) return;
-      const topo = Math.min(...caixasGrupo.map((caixa) => caixa.y)) - 17;
-      const fundo = Math.max(...caixasGrupo.map((caixa) => caixa.y + caixa.h)) + 12;
+      // A moldura acompanha os limites reais das vagas deste setor,
+      // sem ocupar a largura inteira do mapa quando há poucas baias.
+      const moldura = calcularLimitesMolduraGrupo(caixasGrupo);
       ctx.fillStyle = 'rgba(16, 29, 23, .28)';
-      ctx.fillRect(MARGEM_VAGAS_ESQUERDA - 18, topo,
-        largura - MARGEM_VAGAS_ESQUERDA - MARGEM_VAGAS_DIREITA + 36, fundo - topo);
+      ctx.fillRect(moldura.x, moldura.y, moldura.largura, moldura.altura);
       ctx.strokeStyle = grupo.cor;
       ctx.globalAlpha = .55;
       ctx.lineWidth = 1;
-      ctx.strokeRect(MARGEM_VAGAS_ESQUERDA - 18, topo,
-        largura - MARGEM_VAGAS_ESQUERDA - MARGEM_VAGAS_DIREITA + 36, fundo - topo);
+      ctx.strokeRect(moldura.x, moldura.y, moldura.largura, moldura.altura);
       ctx.globalAlpha = 1;
       ctx.fillStyle = grupo.cor;
-      ctx.fillRect(MARGEM_VAGAS_ESQUERDA - 18, topo, 4, fundo - topo);
+      ctx.fillRect(moldura.x, moldura.y, 4, moldura.altura);
       ctx.font = 'bold 10px "Lucida Console", monospace';
       ctx.textAlign = 'left';
       ctx.fillText(grupo.nome.toUpperCase() + ' · ' + grupo.vagas.length + ' VAGA(S)',
-        MARGEM_VAGAS_ESQUERDA - 10, topo - 4);
+        moldura.x + 8, moldura.y - 4);
     });
 
     // Rede física: avenida, corredor de entrada, pistas entre fileiras e corredor de saída.
