@@ -30,10 +30,11 @@
     clientes: [],
     eventos: [],
     simulacao: null,
-    todosOsEspacos: false,
-    mapPage: 0,
-    mapPageSize: 80,
     mapVisibleSlots: [],
+    animacoesTransito: [],
+    eventosInicializados: false,
+    idsEventosConhecidos: new Set(),
+    animacaoFrame: null,
     mapHitBoxes: [],
     selectedSlotId: null,
     ultimaFalhaConexao: false,
@@ -326,17 +327,23 @@
     return typeof cor === 'string' && /^#[0-9a-fA-F]{6}$/.test(cor) ? cor : fallback;
   }
 
-  function desenharSprite(ctx, veiculo, x, y, larguraMaxima, alturaMaxima) {
+  function desenharSprite(ctx, veiculo, x, y, larguraMaxima, alturaMaxima, rotacao = 0) {
     const tipo = veiculo?.tipoVeiculo || 'sedan';
     const sprite = SPRITES[tipo] || SPRITES.sedan;
     const colunas = Math.max(...sprite.map((linha) => linha.length));
     const linhas = sprite.length;
-    const pixel = Math.max(1, Math.floor(Math.min(2, larguraMaxima / colunas, alturaMaxima / linhas)));
+    const pixel = Math.max(1, Math.floor(Math.min(3, larguraMaxima / colunas, alturaMaxima / linhas)));
     const largura = colunas * pixel;
     const altura = linhas * pixel;
-    const inicioX = Math.floor(x - largura / 2);
-    const inicioY = Math.floor(y - altura / 2);
+    const inicioX = Math.floor(-largura / 2);
+    const inicioY = Math.floor(-altura / 2);
     const body = corParaPixel(veiculo?.corVeiculo || veiculo?.cor, MAP_PALETTE.vehicleFallback || '#A7ADB4');
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotacao);
+    ctx.fillStyle = 'rgba(0, 0, 0, .38)';
+    ctx.fillRect(inicioX + 3, inicioY + 4, largura, altura);
 
     for (let linha = 0; linha < sprite.length; linha += 1) {
       for (let coluna = 0; coluna < sprite[linha].length; coluna += 1) {
@@ -350,6 +357,11 @@
         ctx.fillRect(inicioX + coluna * pixel, inicioY + linha * pixel, pixel, pixel);
       }
     }
+
+    ctx.globalAlpha = .2;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(inicioX + pixel * 2, inicioY + pixel * 3, pixel, Math.max(pixel, altura * .18));
+    ctx.restore();
   }
 
   function agruparVagasPorCategoria(vagas) {
@@ -376,12 +388,14 @@
         String(a.id).localeCompare(String(b.id), undefined, { numeric: true }));
   }
 
+  const PISTA_Y = 64;
+
   function desenharFundoMapa(ctx, largura, altura) {
     ctx.fillStyle = MAP_PALETTE.asphalt || '#26372F';
     ctx.fillRect(0, 0, largura, altura);
     const textura = MAP_PALETTE.asphaltDots || [[8, 8], [18, 13], [12, 21], [25, 4]];
-    for (let y = 40; y < altura; y += 28) {
-      for (let x = 8; x < largura; x += 32) {
+    for (let y = 92; y < altura; y += 30) {
+      for (let x = 8; x < largura; x += 34) {
         textura.forEach(([dx, dy]) => {
           ctx.fillStyle = MAP_PALETTE.asphaltTile || '#2B3D34';
           ctx.fillRect(x + dx, y + dy, 2, 2);
@@ -390,88 +404,91 @@
     }
 
     ctx.fillStyle = MAP_PALETTE.header || '#17251F';
-    ctx.fillRect(0, 0, largura, 36);
+    ctx.fillRect(0, 0, largura, 30);
     ctx.fillStyle = MAP_PALETTE.headerText || '#AFCB9A';
-    ctx.font = 'bold 9px "Lucida Console", monospace';
+    ctx.font = 'bold 10px "Lucida Console", monospace';
     ctx.textAlign = 'left';
-    ctx.fillText('ENTRADA ▶', 12, 22);
+    ctx.fillText('ENTRADA  ◀', 14, 19);
     ctx.textAlign = 'center';
     ctx.fillStyle = MAP_PALETTE.roadText || '#D8E4CF';
-    ctx.fillText('PISTA DE CIRCULAÇÃO', largura / 2, 22);
+    ctx.fillText('PISTA DE CIRCULAÇÃO · SENTIDO ÚNICO', largura / 2, 19);
     ctx.textAlign = 'right';
-    ctx.fillText('SAÍDA ▶', largura - 12, 22);
+    ctx.fillText('SAÍDA  ▶', largura - 14, 19);
 
+    ctx.fillStyle = '#1A2923';
+    ctx.fillRect(0, 38, largura, 48);
     ctx.strokeStyle = MAP_PALETTE.roadStripe || '#E4D28A';
     ctx.lineWidth = 2;
-    ctx.setLineDash([8, 7]);
+    ctx.setLineDash([11, 9]);
     ctx.beginPath();
-    ctx.moveTo(12, 30);
-    ctx.lineTo(largura - 12, 30);
+    ctx.moveTo(8, PISTA_Y);
+    ctx.lineTo(largura - 8, PISTA_Y);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Guarita e cancela em blocos pixelados; representam a entrada física do pátio.
+    // Guarita, operador e cancela em pixel art.
     ctx.fillStyle = '#526B59';
-    ctx.fillRect(91, 6, 18, 24);
+    ctx.fillRect(104, 29, 28, 25);
     ctx.fillStyle = '#A8C6A6';
-    ctx.fillRect(95, 9, 10, 8);
+    ctx.fillRect(109, 33, 18, 8);
     ctx.fillStyle = '#24352B';
-    ctx.fillRect(94, 19, 12, 7);
+    ctx.fillRect(109, 44, 18, 7);
     ctx.fillStyle = '#E6CE7E';
-    ctx.fillRect(111, 13, 23, 3);
+    ctx.fillRect(137, 48, 30, 3);
     ctx.fillStyle = '#B75E50';
-    ctx.fillRect(111, 10, 4, 9);
-    ctx.fillRect(130, 10, 4, 9);
+    ctx.fillRect(137, 44, 4, 11);
+    ctx.fillRect(163, 44, 4, 11);
+    ctx.fillStyle = '#E9D18C';
+    ctx.fillRect(142, 45, 4, 3);
+    ctx.fillRect(150, 45, 4, 3);
+    ctx.fillRect(158, 45, 4, 3);
   }
 
   function desenharVaga(ctx, vaga, caixa, selecionada, veiculo) {
     const status = vaga.status || 'livre';
-    const estados = MAP_PALETTE.states || {};
-    const cores = estados[status] || estados.livre || { fundo: '#294A35', borda: '#83B77D', texto: '#DCF0C8' };
+    const centroX = caixa.x + caixa.w / 2;
+    const centroY = caixa.y + caixa.h / 2 + 4;
 
-    ctx.fillStyle = MAP_PALETTE.slotShadow || '#14221C';
-    ctx.fillRect(caixa.x + 2, caixa.y + 3, caixa.w, caixa.h);
-    ctx.fillStyle = cores.fundo;
-    ctx.fillRect(caixa.x, caixa.y, caixa.w, caixa.h);
-    ctx.strokeStyle = selecionada ? (MAP_PALETTE.selection || '#F4D273') : cores.borda;
-    ctx.lineWidth = selecionada ? 3 : 2;
-    ctx.strokeRect(caixa.x + 1, caixa.y + 1, caixa.w - 2, caixa.h - 2);
+    // A vaga é marcada apenas pela pintura no asfalto. Não há cartões coloridos
+    // para livre/ocupada: a presença do veículo informa a ocupação.
+    ctx.save();
+    ctx.strokeStyle = selecionada ? (MAP_PALETTE.selection || '#F4D273') : 'rgba(218, 232, 218, .62)';
+    ctx.lineWidth = selecionada ? 3 : 1.4;
+    ctx.setLineDash(selecionada ? [] : [4, 4]);
+    ctx.strokeRect(caixa.x + 2, caixa.y + 2, caixa.w - 4, caixa.h - 4);
+    ctx.setLineDash([]);
 
-    ctx.fillStyle = cores.texto;
-    ctx.font = 'bold 7px "Lucida Console", monospace';
+    ctx.fillStyle = selecionada ? '#FFE18B' : '#B8C8BA';
+    ctx.font = 'bold 8px "Lucida Console", monospace';
     ctx.textAlign = 'left';
-    ctx.fillText(vaga.id, caixa.x + 4, caixa.y + 9, caixa.w - 8);
+    ctx.fillText(vaga.id, caixa.x + 6, caixa.y + 12, caixa.w - 12);
 
     if (status === 'ocupada') {
-      desenharSprite(ctx, veiculo || {
-        tipoVeiculo: 'sedan',
-        corVeiculo: '#A7ADB4',
-      }, caixa.x + caixa.w / 2, caixa.y + caixa.h / 2 + 3, caixa.w - 12, caixa.h - 20);
-      ctx.fillStyle = '#E8F2F0';
-      ctx.font = 'bold 6px "Lucida Console", monospace';
+      desenharSprite(ctx, veiculo || { tipoVeiculo: 'sedan', corVeiculo: '#A7ADB4' },
+        centroX, centroY + 2, caixa.w - 16, caixa.h - 20);
+      ctx.fillStyle = '#F0F5E8';
+      ctx.font = 'bold 7px "Lucida Console", monospace';
       ctx.textAlign = 'center';
-      ctx.fillText(vaga.placa || 'OCUPADA', caixa.x + caixa.w / 2, caixa.y + caixa.h - 4, caixa.w - 4);
+      ctx.fillText(vaga.placa || 'OCUPADA', centroX, caixa.y + caixa.h - 5, caixa.w - 6);
     } else if (status === 'bloqueada') {
-      ctx.strokeStyle = '#F3A39B';
-      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#E98378';
+      ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.moveTo(caixa.x + 9, caixa.y + 19);
-      ctx.lineTo(caixa.x + caixa.w - 9, caixa.y + caixa.h - 8);
-      ctx.moveTo(caixa.x + caixa.w - 9, caixa.y + 19);
-      ctx.lineTo(caixa.x + 9, caixa.y + caixa.h - 8);
+      ctx.moveTo(caixa.x + 10, caixa.y + caixa.h - 13);
+      ctx.lineTo(caixa.x + caixa.w - 10, caixa.y + 20);
       ctx.stroke();
-      ctx.fillStyle = cores.texto;
-      ctx.font = 'bold 6px "Lucida Console", monospace';
+      ctx.strokeStyle = '#F2C96B';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(caixa.x + 10, caixa.y + caixa.h - 13);
+      ctx.lineTo(caixa.x + caixa.w - 10, caixa.y + 20);
+      ctx.stroke();
+      ctx.fillStyle = '#FFB4A7';
+      ctx.font = 'bold 7px "Lucida Console", monospace';
       ctx.textAlign = 'center';
-      ctx.fillText('BLOQUEADA', caixa.x + caixa.w / 2, caixa.y + caixa.h - 4, caixa.w - 4);
-    } else {
-      ctx.fillStyle = '#A8D190';
-      ctx.fillRect(caixa.x + caixa.w / 2 - 2, caixa.y + 22, 4, 4);
-      ctx.fillStyle = cores.texto;
-      ctx.font = 'bold 6px "Lucida Console", monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText('LIVRE', caixa.x + caixa.w / 2, caixa.y + caixa.h - 5);
+      ctx.fillText('BLOQUEADA', centroX, caixa.y + caixa.h - 5, caixa.w - 6);
     }
+    ctx.restore();
   }
 
   function desenharMapa() {
@@ -479,54 +496,40 @@
     const shell = $('#canvasShell');
     if (!canvas || !shell) return;
 
-    const largura = Math.max(300, Math.floor(shell.clientWidth - 4));
-    const filtro = $('#mapCategoryFilter')?.value || '';
+    const largura = Math.max(320, Math.floor(shell.clientWidth - 4));
     const filtradas = vagasDoMapa();
-    const paginas = Math.max(1, Math.ceil(filtradas.length / state.mapPageSize));
-    state.mapPage = Math.min(state.mapPage, paginas - 1);
-    const inicio = state.mapPage * state.mapPageSize;
-    const visiveis = filtradas.slice(inicio, inicio + state.mapPageSize);
-    state.mapVisibleSlots = visiveis;
-
-    const grupos = agruparVagasPorCategoria(visiveis);
-    const margem = 14;
-    const colunas = Math.max(3, Math.min(8, Math.floor((largura - 44) / 88)));
-    const espacamentoX = 9;
+    state.mapVisibleSlots = filtradas;
+    const grupos = agruparVagasPorCategoria(filtradas);
+    const margem = 22;
+    const espacamentoX = 10;
     const espacamentoY = 8;
-    const slotW = Math.max(28, Math.floor((largura - margem * 2 - espacamentoX * (colunas - 1)) / colunas));
-    const slotH = 58;
-    let cursorY = 51;
+    const colunas = Math.max(3, Math.min(18, Math.floor((largura - margem * 2 + espacamentoX) / 76)));
+    const slotW = Math.max(46, Math.floor((largura - margem * 2 - espacamentoX * (colunas - 1)) / colunas));
+    const slotH = 70;
+    let cursorY = 105;
     const caixas = [];
 
     grupos.forEach((grupo) => {
       cursorY += 8;
       const topoGrupo = cursorY;
-      cursorY += 19;
+      cursorY += 21;
       grupo.vagas.forEach((vaga, indice) => {
         const linha = Math.floor(indice / colunas);
         const coluna = indice % colunas;
-        const faixaCirculacao = Math.floor(linha / 2) * 18;
+        const faixaCirculacao = Math.floor(linha / 2) * 20;
         const y = cursorY + linha * (slotH + espacamentoY) + faixaCirculacao;
         const x = margem + coluna * (slotW + espacamentoX);
-        caixas.push({
-          vaga,
-          x,
-          y,
-          w: slotW,
-          h: slotH,
-          topoGrupo,
-          grupoId: grupo.id,
-        });
+        caixas.push({ vaga, x, y, w: slotW, h: slotH, topoGrupo, grupoId: grupo.id });
       });
       const linhas = Math.ceil(grupo.vagas.length / colunas);
       const faixasCirculacao = Math.floor(Math.max(0, linhas - 1) / 2);
-      cursorY += linhas * (slotH + espacamentoY) + faixasCirculacao * 18 + 18;
+      cursorY += linhas * (slotH + espacamentoY) + faixasCirculacao * 20 + 24;
     });
 
-    const altura = Math.max(260, cursorY + 20);
-    canvas.width = largura;
-    canvas.height = altura;
-    canvas.style.height = `${altura}px`;
+    const altura = Math.max(320, cursorY + 16);
+    if (canvas.width !== largura) canvas.width = largura;
+    if (canvas.height !== altura) canvas.height = altura;
+    canvas.style.height = altura + 'px';
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.imageSmoothingEnabled = false;
@@ -535,59 +538,191 @@
     grupos.forEach((grupo) => {
       const caixasGrupo = caixas.filter((caixa) => caixa.grupoId === grupo.id);
       if (!caixasGrupo.length) return;
-      const topo = Math.min(...caixasGrupo.map((caixa) => caixa.y)) - 15;
-      const fundo = Math.max(...caixasGrupo.map((caixa) => caixa.y + caixa.h)) + 7;
-      ctx.fillStyle = '#1C2A23';
-      ctx.fillRect(7, topo, largura - 14, fundo - topo);
+      const topo = Math.min(...caixasGrupo.map((caixa) => caixa.y)) - 16;
+      const fundo = Math.max(...caixasGrupo.map((caixa) => caixa.y + caixa.h)) + 8;
+      ctx.fillStyle = 'rgba(16, 29, 23, .22)';
+      ctx.fillRect(8, topo, largura - 16, fundo - topo);
       ctx.strokeStyle = grupo.cor;
+      ctx.globalAlpha = .48;
       ctx.lineWidth = 1;
-      ctx.strokeRect(7, topo, largura - 14, fundo - topo);
+      ctx.strokeRect(8, topo, largura - 16, fundo - topo);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = grupo.cor;
+      ctx.fillRect(8, topo, 4, fundo - topo);
+      ctx.font = 'bold 10px "Lucida Console", monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(grupo.nome.toUpperCase() + ' · ' + grupo.vagas.length + ' VAGA(S)', 17, topo - 4);
 
       const linhasGrupo = Array.from(new Set(caixasGrupo.map((caixa) => caixa.y))).sort((a, b) => a - b);
       for (let indiceLinha = 1; indiceLinha < linhasGrupo.length; indiceLinha += 1) {
         if (indiceLinha % 2 !== 0) continue;
         const faixaY = Math.floor((linhasGrupo[indiceLinha - 1] + slotH + linhasGrupo[indiceLinha]) / 2);
-        ctx.fillStyle = '#34483E';
-        ctx.fillRect(10, faixaY - 5, largura - 20, 13);
+        ctx.fillStyle = '#182821';
+        ctx.fillRect(12, faixaY - 5, largura - 24, 14);
         ctx.strokeStyle = '#B2C69A';
         ctx.lineWidth = 1;
-        ctx.setLineDash([6, 7]);
+        ctx.setLineDash([6, 8]);
         ctx.beginPath();
-        ctx.moveTo(17, faixaY + 1);
-        ctx.lineTo(largura - 17, faixaY + 1);
+        ctx.moveTo(20, faixaY + 2);
+        ctx.lineTo(largura - 20, faixaY + 2);
         ctx.stroke();
         ctx.setLineDash([]);
-        ctx.fillStyle = '#D9E5D0';
-        ctx.font = 'bold 6px "Lucida Console", monospace';
-        ctx.textAlign = 'right';
-        ctx.fillText('PISTA', largura - 22, faixaY - 7);
       }
-
-      ctx.fillStyle = grupo.cor;
-      ctx.font = 'bold 9px "Lucida Console", monospace';
-      ctx.textAlign = 'left';
-      ctx.fillText(`SETOR ${grupo.nome.toUpperCase()} · ${grupo.vagas.length} VAGA(S)`, 13, topo - 4);
     });
 
-    const veiculosPorPlaca = new Map(state.veiculos.map((veiculo) => [veiculo.placa, veiculo]));
     state.mapHitBoxes = caixas;
+    const veiculosPorPlaca = new Map(state.veiculos.map((veiculo) => [veiculo.placa, veiculo]));
     caixas.forEach((caixa) => {
       const selecionada = state.selectedSlotId === caixa.vaga.id;
       const veiculo = caixa.vaga.placa ? veiculosPorPlaca.get(caixa.vaga.placa) : null;
       desenharVaga(ctx, caixa.vaga, caixa, selecionada, veiculo);
     });
 
-    ctx.fillStyle = MAP_PALETTE.roadText || '#D8E6D1';
-    ctx.font = 'bold 8px "Lucida Console", monospace';
-    ctx.textAlign = 'right';
-    ctx.fillText(`PÁGINA ${state.mapPage + 1}/${paginas}`, largura - 13, altura - 7);
+    desenharAnimacoesTransito(ctx, largura);
+    definirTexto('mapCaption', $('#mapCategoryFilter')?.value
+      ? 'Setor filtrado: ' + ($('#mapCategoryFilter').selectedOptions[0]?.textContent || 'selecionado') + ' · ' + filtradas.length + ' vaga(s) nesta visão.'
+      : 'Visão única de ' + filtradas.length + ' vaga(s). Veículos entram, estacionam, saem e têm tentativas negadas animadas no próprio pátio.');
+  }
 
-    definirTexto('mapPageLabel', `PÁGINA ${state.mapPage + 1} / ${paginas} · ${filtradas.length} VAGAS`);
-    $('#mapPrevPage').disabled = state.mapPage <= 0;
-    $('#mapNextPage').disabled = state.mapPage >= paginas - 1;
-    definirTexto('mapCaption', filtro
-      ? `Setor filtrado: ${filtro}. Clique numa vaga para ver seu estado e seus dados.`
-      : 'Mapa top-down ortográfico. Cada marcação corresponde a uma vaga real da API; clique para ver detalhes.');
+  function lerp(inicio, fim, progresso) {
+    return inicio + (fim - inicio) * progresso;
+  }
+
+  function desenharAnimacoesTransito(ctx, largura) {
+    const agora = performance.now();
+    const ativas = [];
+    state.animacoesTransito.forEach((animacao) => {
+      const progressoBruto = (agora - animacao.inicio) / animacao.duracao;
+      if (progressoBruto >= 1) return;
+      ativas.push(animacao);
+      const progresso = Math.max(0, Math.min(1, progressoBruto));
+      const suavizado = progresso * progresso * (3 - 2 * progresso);
+      const caixaAlvo = state.mapHitBoxes.find((caixa) => caixa.vaga.id === animacao.vagaId);
+      const alvo = caixaAlvo
+        ? { x: caixaAlvo.x + caixaAlvo.w / 2, y: caixaAlvo.y + caixaAlvo.h / 2 }
+        : { x: Math.round(largura * .62), y: PISTA_Y };
+      const caixaOrigem = state.mapHitBoxes.find((caixa) => caixa.vaga.id === animacao.vagaId);
+      const origem = caixaOrigem
+        ? { x: caixaOrigem.x + caixaOrigem.w / 2, y: caixaOrigem.y + caixaOrigem.h / 2 }
+        : { x: Math.round(largura * .62), y: PISTA_Y };
+      let x;
+      let y;
+      let rotacao = Math.PI / 2;
+
+      if (animacao.acao === 'entrada') {
+        if (suavizado < .52) {
+          x = lerp(-28, alvo.x, suavizado / .52);
+          y = PISTA_Y;
+        } else {
+          x = alvo.x;
+          y = lerp(PISTA_Y, alvo.y, (suavizado - .52) / .48);
+          rotacao = 0;
+        }
+      } else if (animacao.acao === 'saida') {
+        if (suavizado < .48) {
+          x = origem.x;
+          y = lerp(origem.y, PISTA_Y, suavizado / .48);
+          rotacao = 0;
+        } else {
+          x = lerp(origem.x, largura + 34, (suavizado - .48) / .52);
+          y = PISTA_Y;
+        }
+      } else {
+        const barreiraX = 174;
+        if (suavizado < .56) {
+          x = lerp(-28, barreiraX, suavizado / .56);
+        } else if (suavizado < .79) {
+          x = barreiraX;
+        } else {
+          x = lerp(barreiraX, -38, (suavizado - .79) / .21);
+        }
+        y = PISTA_Y;
+        rotacao = Math.PI / 2;
+        if (suavizado >= .56 && suavizado < .79) {
+          const piscando = Math.floor(agora / 150) % 2 === 0;
+          ctx.fillStyle = piscando ? '#9D4542' : '#713532';
+          ctx.fillRect(barreiraX - 9, PISTA_Y - 30, 114, 18);
+          ctx.strokeStyle = '#F0C86A';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(barreiraX - 9, PISTA_Y - 30, 114, 18);
+          ctx.fillStyle = '#FFF0D0';
+          ctx.font = 'bold 9px "Lucida Console", monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText('ACESSO BLOQUEADO', barreiraX + 48, PISTA_Y - 18);
+        }
+      }
+
+      desenharSprite(ctx, animacao.veiculo, x, y, 44, 30, rotacao);
+      if (animacao.acao !== 'bloqueada' && animacao.veiculo.placa) {
+        ctx.fillStyle = '#F0F4E9';
+        ctx.font = 'bold 7px "Lucida Console", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(animacao.veiculo.placa, x, y + (rotacao === 0 ? 27 : 25));
+      }
+    });
+    state.animacoesTransito = ativas;
+  }
+
+  function iniciarAnimacaoTransito() {
+    if (state.animacaoFrame !== null || !state.animacoesTransito.length) return;
+    const animar = () => {
+      state.animacaoFrame = null;
+      if (!state.animacoesTransito.length) return;
+      desenharMapa();
+      if (state.animacoesTransito.length) {
+        state.animacaoFrame = window.requestAnimationFrame(animar);
+      }
+    };
+    state.animacaoFrame = window.requestAnimationFrame(animar);
+  }
+
+  function processarNovosEventos(eventos, veiculosAnteriores) {
+    if (!state.eventosInicializados) {
+      eventos.forEach((evento) => state.idsEventosConhecidos.add(evento.id));
+      state.eventosInicializados = true;
+      return;
+    }
+
+    const novos = eventos
+      .filter((evento) => !state.idsEventosConhecidos.has(evento.id))
+      .reverse();
+
+    novos.forEach((evento) => {
+      state.idsEventosConhecidos.add(evento.id);
+      const tipo = String(evento.tipo || '').toUpperCase();
+      let acao = null;
+      if (tipo === 'ENTRADA_AUTORIZADA') acao = 'entrada';
+      else if (tipo === 'SAIDA_CONCLUIDA' || tipo === 'SAIDA_PAGAMENTO_RECUSADO') acao = 'saida';
+      else if (tipo === 'ENTRADA_NEGADA') acao = 'bloqueada';
+      if (!acao) return;
+
+      const veiculoAtual = state.veiculos.find((veiculo) => veiculo.placa === evento.placa);
+      const veiculoAnterior = veiculosAnteriores.get(evento.placa);
+      const cliente = state.clientes.find((item) =>
+        item.veiculos?.some((veiculo) => veiculo.placa === evento.placa)
+      );
+      const veiculoCadastrado = cliente?.veiculos?.find((veiculo) => veiculo.placa === evento.placa);
+      const veiculo = {
+        placa: evento.placa || 'SEM PLACA',
+        tipoVeiculo: evento.tipoVeiculo || veiculoAtual?.tipoVeiculo || veiculoAnterior?.tipoVeiculo || veiculoCadastrado?.tipo || 'hatch',
+        corVeiculo: evento.corVeiculo || veiculoAtual?.corVeiculo || veiculoAnterior?.corVeiculo || veiculoCadastrado?.cor || '#D66F78',
+      };
+      state.animacoesTransito.push({
+        acao,
+        inicio: performance.now(),
+        duracao: acao === 'bloqueada' ? 1850 : 2100,
+        veiculo,
+        vagaId: evento.vagaId || veiculoAtual?.vagaId || veiculoAnterior?.vagaId || null,
+      });
+    });
+
+    while (state.idsEventosConhecidos.size > 320) {
+      state.idsEventosConhecidos.delete(state.idsEventosConhecidos.values().next().value);
+    }
+    if (state.animacoesTransito.length > 10) {
+      state.animacoesTransito = state.animacoesTransito.slice(-10);
+    }
+    iniciarAnimacaoTransito();
   }
 
   function preencherFiltroMapa(configuracao) {
@@ -632,39 +767,15 @@
   }
 
 
-  function criarVaga(vaga) {
-    const elemento = document.createElement('div');
-    const status = vaga.status || 'livre';
-    elemento.className = `vacancy-cell vacancy-${status === 'ocupada' ? 'occupied' : status === 'bloqueada' ? 'blocked' : 'free'}`;
-    elemento.title = `${vaga.id} · ${vaga.categoriaNome || vaga.categoriaId} · ${status}${vaga.placa ? ` · ${vaga.placa}` : ''}`;
-    const id = document.createElement('span');
-    id.textContent = vaga.id;
-    elemento.append(id);
-    const statusLabel = document.createElement('small');
-    statusLabel.textContent = status === 'ocupada' ? (vaga.placa || 'OCUPADA') : status.toUpperCase();
-    elemento.append(statusLabel);
-    return elemento;
-  }
-
   function renderizarVagas(vagas, resumo) {
-    const grade = $('#vacancyGrid');
-    grade.replaceChildren();
-    const limite = state.todosOsEspacos ? vagas.length : Math.min(vagas.length, 48);
-    vagas.slice(0, limite).forEach((vaga) => grade.append(criarVaga(vaga)));
-    if (vagas.length === 0) {
-      const vazio = document.createElement('p');
-      vazio.className = 'empty-state';
-      vazio.textContent = 'Nenhuma vaga retornada pelo backend.';
-      grade.append(vazio);
-    }
-    const ocultas = Math.max(0, vagas.length - limite);
-    definirTexto('vacancySummary',
-      `${resumo?.total ?? vagas.length} vagas · ${resumo?.livres ?? 0} livres · ${resumo?.ocupadas ?? 0} ocupadas · ${resumo?.bloqueadas ?? 0} bloqueadas${ocultas ? ` · ${ocultas} ocultas` : ''}`
-    );
-    $('#showAllVacanciesButton').textContent = state.todosOsEspacos ? 'MOSTRAR MENOS' : 'VER TODAS';
-    $('#showAllVacanciesButton').disabled = vagas.length <= 48;
     preencherFiltroMapa(state.configuracao);
     desenharMapa();
+    definirTexto('vacancySummary',
+      (resumo?.total ?? vagas.length) + ' vagas · ' +
+      (resumo?.livres ?? 0) + ' livres · ' +
+      (resumo?.ocupadas ?? 0) + ' ocupadas · ' +
+      (resumo?.bloqueadas ?? 0) + ' bloqueadas · visão completa'
+    );
 
     if (state.selectedSlotId) {
       const vagaSelecionada = state.vagas.find((vaga) => vaga.id === state.selectedSlotId);
@@ -841,6 +952,7 @@
     ponto.className = `state-dot ${executando ? 'state-running' : pausado ? 'state-paused' : ''}`;
     definirTexto('simulationStateText', estado.toUpperCase());
     definirTexto('simulationSpeedLabel', `${simulacao.velocidade || 1}×`);
+    definirTexto('securityGuardStatus', executando ? 'MONITORANDO ENTRADAS' : pausado ? 'SIMULAÇÃO EM PAUSA' : 'AGUARDANDO MOVIMENTO');
     $('#simulationSpeed').value = String(simulacao.velocidade || 1);
     $('#simulationSpeed').disabled = estado === 'parado';
     const estatisticas = simulacao.estatisticas || {};
@@ -883,6 +995,7 @@
     }
 
     mostrarPainel();
+    const veiculosAnteriores = new Map(state.veiculos.map((veiculo) => [veiculo.placa, veiculo]));
     const [estado, vagas, veiculos, clientes, eventos, simulacao] = await Promise.all([
       api('GET', '/api/estado'),
       api('GET', '/api/vagas'),
@@ -901,6 +1014,7 @@
     atualizarIndicadores(estado);
     renderizarVagas(state.vagas, vagas.resumo);
     renderizarVeiculos(state.veiculos);
+    processarNovosEventos(state.eventos, veiculosAnteriores);
     renderizarEventos(state.eventos);
     atualizarSimulacao(simulacao);
     preencherCategorias(state.configuracao);
@@ -923,7 +1037,7 @@
 
   function iniciarPolling() {
     if (state.polling !== null) window.clearInterval(state.polling);
-    state.polling = window.setInterval(() => atualizarPainel(true), 2500);
+    state.polling = window.setInterval(() => atualizarPainel(true), 1400);
   }
 
   async function executarAcao(metodo, rota, corpo, mensagemSucesso) {
@@ -960,18 +1074,7 @@
       else renderizarDetalhes('');
       desenharMapa();
     });
-    $('#mapCategoryFilter').addEventListener('change', () => {
-      state.mapPage = 0;
-      desenharMapa();
-    });
-    $('#mapPrevPage').addEventListener('click', () => {
-      state.mapPage = Math.max(0, state.mapPage - 1);
-      desenharMapa();
-    });
-    $('#mapNextPage').addEventListener('click', () => {
-      state.mapPage += 1;
-      desenharMapa();
-    });
+    $('#mapCategoryFilter').addEventListener('change', () => desenharMapa());
     $('#parkingCanvas').addEventListener('click', selecionarVagaNoMapa);
     $('#parkingCanvas').addEventListener('mousemove', (evento) => {
       const canvas = $('#parkingCanvas');
@@ -1006,16 +1109,6 @@
       await executarAcao('POST', '/api/entradas', { placa }, 'A tentativa duplicada foi processada pelo backend.');
     });
 
-    $('#showAllVacanciesButton').addEventListener('click', () => {
-      state.todosOsEspacos = !state.todosOsEspacos;
-      renderizarVagas(state.vagas, {
-        total: state.vagas.length,
-        livres: state.vagas.filter((vaga) => vaga.status === 'livre').length,
-        ocupadas: state.vagas.filter((vaga) => vaga.status === 'ocupada').length,
-        bloqueadas: state.vagas.filter((vaga) => vaga.status === 'bloqueada').length,
-      });
-    });
-
     $('#generationForm').addEventListener('submit', async (evento) => {
       evento.preventDefault();
       const quantidade = Number($('#generationQuantity').value);
@@ -1045,10 +1138,10 @@
     $('#startSimulationButton').addEventListener('click', async () => {
       const resultado = await executarAcao('POST', '/api/simulacao/iniciar', {
         velocidade: Number($('#simulationSpeed').value),
-        intervaloChegadaMs: 5000,
-        quantidadeVeiculos: 12,
-        permanenciaMinMs: 8000,
-        permanenciaMaxMs: 30000,
+        intervaloChegadaMs: 1600,
+        quantidadeVeiculos: Number($('#simulationFleetSize').value),
+        permanenciaMinMs: 12000,
+        permanenciaMaxMs: 26000,
       }, 'Simulação iniciada.');
       if (resultado) atualizarSimulacao(resultado);
     });
