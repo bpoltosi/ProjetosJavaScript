@@ -1,37 +1,71 @@
 # ProjetosJavaScript
 
-Repositório de estudos e projetos em **JavaScript**, com exercícios de fundamentos, funções, estruturas de dados, orientação a objetos e aplicações de terminal.
+Repositório de estudos, exercícios e projetos desenvolvidos com **JavaScript e Node.js**, reunindo conteúdos de programação, estruturas de dados, orientação a objetos, manipulação de arquivos e aplicações práticas.
 
-## Organização
+> Repositório em evolução: os exemplos e projetos refletem o aprendizado e experimentações ao longo dos estudos.
 
-- `ArquivosAula/` — exemplos de aulas e exercícios: arrays, objetos, classes, exceções, arquivos, estruturas de dados, datas e operações.
-- `ArquivosAula2/` — estudos organizados por tema, incluindo funções, arrow functions, closures, currying, memoização, recursividade e exercícios.
-- `ArquivosAplicativoTrem/` — arquivos de um exercício de modelagem de composições e elementos de trem.
-- `SistemaControleEstacionamento/` — projeto acadêmico de controle de estacionamento, com módulos, regras de negócio, menu de terminal e persistência em CSV.
+## Conteúdo
 
-## Conceitos praticados
+| Diretório | Descrição |
+|---|---|
+| [ArquivosAula](./ArquivosAula/) | Exercícios e exemplos de fundamentos, arrays, objetos, arquivos, estruturas de dados e outros conteúdos de aula. |
+| [ArquivosAula2](./ArquivosAula2/) | Estudos organizados por tópicos, incluindo funções, arrow functions, closures, currying, memoização e recursividade. |
+| [ArquivosAplicativoTrem](./ArquivosAplicativoTrem/) | Exercícios de modelagem de composições ferroviárias e hierarquia de elementos de trem. |
+| [SistemaControleEstacionamento](./SistemaControleEstacionamento/) | Aplicação acadêmica de controle de estacionamento com regras de negócio, CLI, painel web, persistência local e testes automatizados. |
 
-JavaScript moderno, funções declaradas e expressões, arrow functions, arrays, objetos, classes, encapsulamento, polimorfismo, closures, recursividade, tratamento de exceções, módulos, leitura e escrita de arquivos e estruturas como filas e pilhas.
+## Tecnologias e conceitos
 
-## Executar exemplos
+- JavaScript (ES6+)
+- Node.js e npm
+- Arrays, objetos e estruturas de dados
+- Funções, arrow functions e recursividade
+- Closures e funções de ordem superior
+- Classes, encapsulamento e polimorfismo
+- Modularização
+- Tratamento de erros e exceções
+- Leitura e escrita de arquivos
+- CSV, JSON e JSONL
+- Aplicações de terminal e APIs HTTP
+- Testes automatizados
 
-Com Node.js instalado:
+## Executar os exemplos
+
+Os exemplos individuais podem ser executados com Node.js. Na raiz do repositório, use:
 
 ```bash
 node caminho/do/arquivo.js
 ```
 
-Para projetos com `package.json`, entre no respectivo diretório, instale as dependências e utilize os scripts declarados:
+Alguns exemplos utilizam arquivos de entrada ou dependências próprias; consulte os comentários ou README do respectivo diretório.
 
-```bash
-npm install
-npm start
-```
+## Projeto em destaque — Sistema de Controle de Estacionamento
 
-## Projeto em destaque: Sistema de Controle de Estacionamento
+O projeto de maior escopo deste repositório é o **Sistema de Controle de Estacionamento**, desenvolvido para aplicar Programação Orientada a Objetos em um cenário prático.
 
-Consulte [SistemaControleEstacionamento/README.md](SistemaControleEstacionamento/README.md) para instruções de execução, opções do menu, dados CSV e regras do projeto.
+Principais recursos incluem:
 
-## Status
+- Cadastro de clientes e veículos;
+- Controle de entrada e saída;
+- Gerenciamento de vagas, ocupação e bloqueios;
+- Regras de cobrança e perfis de clientes;
+- Consultas e relatórios gerenciais;
+- Persistência local de dados;
+- Histórico de eventos;
+- Interface de terminal (CLI) e painel web;
+- Simulação automatizada do funcionamento do estacionamento;
+- Testes automatizados e integração contínua.
 
-Repositório de aprendizagem e projetos acadêmicos em evolução. Os exemplos são independentes; nem todos compartilham a mesma configuração ou dependências.
+Acesse o [README do Sistema de Controle de Estacionamento](./SistemaControleEstacionamento/README.md) para requisitos, instalação, comandos de execução, dados e detalhes técnicos.
+
+## Ambiente
+
+Para executar exemplos e projetos Node.js, instale:
+
+- [Node.js](https://nodejs.org/)
+- npm (incluído na instalação do Node.js)
+
+Dependências e comandos podem variar de projeto para projeto. Consulte o `package.json` e o README local quando existirem.
+
+## Objetivo
+
+Este repositório funciona como um registro prático da evolução em JavaScript: começa com exercícios e experimentações e reúne projetos que aplicam os conceitos em soluções cada vez mais completas.
